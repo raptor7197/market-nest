@@ -1,261 +1,186 @@
-# MarketNest - Mini Fashion Marketplace
+# MarketNest
 
-A full-stack MERN (MongoDB, Express, React, Node.js) fashion marketplace built for the Trizen Ventures assignment.
+Mini fashion marketplace built with MongoDB, Express, React, and Node.js for the Trizen Ventures assignment.
 
-## Overview
+## Stack
 
-MarketNest is a fashion marketplace platform that supports two user roles:
-- **Brand (Seller)**: Can create, edit, and manage products
-- **Customer (User)**: Can browse, search, and filter products
+- Frontend: React 18, Vite, Tailwind CSS, React Router, Axios
+- Backend: Node.js, Express, Mongoose, Joi
+- Auth: JWT access token + refresh token
+- Storage: Cloudinary
+- Deployment: Vercel (client) + Render (server)
 
 ## Architecture
 
-### Tech Stack
-- **Frontend**: React 18 + Vite + Tailwind CSS
-- **Backend**: Node.js + Express.js
-- **Database**: MongoDB (Mongoose ODM)
-- **Authentication**: JWT (Access + Refresh Tokens)
-- **Image Storage**: Cloudinary
-- **Deployment**: Vercel (Frontend) + Render (Backend)
+```text
+client/
+  src/api            Axios instance, API wrappers, auth refresh handling
+  src/context        Auth state and session bootstrap
+  src/pages          Route-level UI
+  src/components     Reusable UI and route guards
 
-### Project Structure
-
-```
-marketnest/
-├── server/                    # Backend API
-│   ├── src/
-│   │   ├── config/           # Database & Cloudinary config
-│   │   ├── controllers/     # Business logic (NOT in routes)
-│   │   ├── middleware/      # Auth, role, ownership validation
-│   │   ├── models/           # MongoDB schemas
-│   │   ├── routes/          # Route definitions (thin)
-│   │   ├── services/        # Token generation
-│   │   ├── utils/           # Error handling, constants
-│   │   ├── validators/      # Joi validation
-│   │   ├── app.js           # Express app setup
-│   │   └── server.js        # Entry point
-│   ├── .env                 # Environment variables
-│   └── package.json
-│
-└── client/                   # Frontend React app
-    ├── src/
-    │   ├── api/             # Axios & API calls
-    │   ├── components/      # Reusable UI components
-    │   ├── context/         # Auth state management
-    │   ├── pages/           # Page components
-    │   ├── App.jsx          # Main app with routing
-    │   └── main.jsx         # Entry point
-    ├── .env                 # Frontend env vars
-    └── package.json
+server/
+  src/config         MongoDB and Cloudinary setup
+  src/controllers    Request handlers
+  src/middleware     Auth, role, ownership, validation, error handling
+  src/models         User and Product schemas
+  src/routes         Thin route definitions
+  src/services       Token generation and verification
+  src/validators     Joi request validation
+  src/scripts        Seed script for placeholder marketplace data
 ```
 
-## Authentication Flow
-
-### JWT Implementation
-The application uses a dual-token authentication system:
-
-1. **Access Token** (15 min expiry)
-   - Stored in localStorage on frontend
-   - Sent in Authorization header for API requests
-   - Short-lived for security
-
-2. **Refresh Token** (7 days expiry)
-   - Stored in httpOnly, secure cookie
-   - Used to obtain new access tokens
-   - Enables session persistence
-
-### Flow Diagram
-```
-Signup/Login
-    │
-    ▼
-Generate Access Token + Refresh Token
-    │
-    ├──▶ Return Access Token (localStorage)
-    │
-    └──▶ Set Refresh Token Cookie (httpOnly)
-              │
-              ▼
-    API Request with Access Token
-              │
-              ├── Valid ──▶ Process Request
-              │
-              └── Expired
-                  │
-                  ▼
-        Refresh Endpoint (cookie)
-              │
-              ▼
-        Generate New Access Token
-              │
-              ▼
-        Return to Client
-```
-
-## Security Decisions
-
-| Decision | Implementation |
-|----------|---------------|
-| Password Hashing | bcryptjs with 10 salt rounds |
-| Token Storage | Access: localStorage, Refresh: httpOnly cookie |
-| Cookie Security | httpOnly, secure (production), sameSite: strict |
-| Input Validation | Joi schema validation |
-| CORS | Whitelist only frontend domain |
-| Ownership Enforcement | Middleware verifies brand owns product |
-| Role-based Access | Middleware checks user role |
-
-## API Endpoints
+## Technical Implementation
 
 ### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/signup` | Register new user |
-| POST | `/api/auth/login` | Login user |
-| POST | `/api/auth/logout` | Logout user |
-| POST | `/api/auth/refresh` | Refresh access token |
-| GET | `/api/auth/me` | Get current user |
 
-### Products (Public)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/products` | List published products (paginated) |
-| GET | `/api/products/:id` | Get product details |
+- Signup requires `name`, `email`, `password`, and `role`.
+- Passwords are hashed with `bcryptjs` in the `User` model pre-save hook.
+- Login returns:
+  - access token in JSON
+  - refresh token in an `httpOnly` cookie
+- Access token is sent in the `Authorization` header for protected requests.
+- Refresh token is stored hashed in MongoDB and validated through `/api/auth/refresh`.
+- Axios interceptors retry failed `401` requests after requesting a new access token.
+- Logout clears the refresh cookie and removes the stored refresh token from the user document.
 
-### Products (Brand)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/products/brand/dashboard` | Get dashboard stats |
-| GET | `/api/products/brand/all` | List brand's products |
-| POST | `/api/products` | Create product |
-| PUT | `/api/products/:id` | Update product |
-| DELETE | `/api/products/:id` | Archive product |
+### Authorization
+
+- `authenticate` middleware verifies JWT access tokens.
+- `requireRole('brand')` restricts dashboard, create, update, delete, and upload routes.
+- `checkOwnership` ensures a brand can edit or archive only its own products.
+- Customers can only access public product browsing endpoints.
+
+### Product Flow
+
+- Product schema includes `name`, `description`, `price`, `category`, `images`, `brand`, and `status`.
+- `status` supports `draft`, `published`, and `archived`.
+- Marketplace queries only return `published` products.
+- Search uses case-insensitive name matching.
+- Category filtering and pagination are handled server-side.
+- Brand dashboard aggregates total, published, archived, and draft counts.
+- Delete is implemented as soft delete by setting `status` to `archived`.
+
+### Uploads
+
+- Image uploads are handled through `multer` and Cloudinary.
+- Product image arrays are limited to 5 items.
+
+### Security Decisions
+
+- Password hashing: `bcryptjs`
+- Input validation: Joi schemas on auth and product routes
+- Secrets: environment variables only
+- Refresh token transport: `httpOnly` cookie
+- Production cookie policy: `secure: true`, `sameSite: 'none'`
+- CORS: frontend origin restricted through `CLIENT_URL`
+
+## API
+
+### Auth
+
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `POST /api/auth/refresh`
+- `GET /api/auth/me`
+
+### Products
+
+- `GET /api/products`
+- `GET /api/products/:id`
+- `GET /api/products/brand/dashboard`
+- `GET /api/products/brand/all`
+- `POST /api/products`
+- `PUT /api/products/:id`
+- `DELETE /api/products/:id`
 
 ### Upload
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/upload` | Upload images (max 5) |
 
-## Features
-
-### Brand Features
-- [x] Dashboard with product statistics
-- [x] Create products (draft or published)
-- [x] Edit own products
-- [x] Soft delete (archive) products
-- [x] Upload multiple images (max 5)
-- [x] View all own products with status filters
-
-### Customer Features
-- [x] Browse marketplace
-- [x] View product details
-- [x] Search by product name
-- [x] Filter by category
-- [x] Server-side pagination
-
-### Security
-- [x] JWT authentication with refresh tokens
-- [x] Role-based access control
-- [x] Ownership enforcement
-- [x] Password hashing with bcrypt
-- [x] Input validation with Joi
+- `POST /api/upload`
 
 ## Environment Variables
 
-### Backend (.env)
+### Server
+
 ```env
 PORT=5000
 NODE_ENV=development
 MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/marketnest
-JWT_SECRET=your-super-secret-access-key
-JWT_REFRESH_SECRET=your-super-secret-refresh-key
+JWT_SECRET=your-access-secret
+JWT_REFRESH_SECRET=your-refresh-secret
 CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 CLIENT_URL=http://localhost:5173
 ```
 
-### Frontend (.env)
+### Client
+
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
 
-## Deployment
+## Local Setup
 
-### Backend (Render)
-1. Create a Render account
-2. Connect GitHub repository
-3. Create Web Service:
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-4. Add environment variables
-5. Deploy
-
-### Frontend (Vercel)
-1. Create Vercel account
-2. Import GitHub repository
-3. Configure:
-   - Framework: Vite
-   - Build: `npm run build`
-   - Output: `dist`
-4. Add environment variable: `VITE_API_URL=<backend-url>`
-5. Deploy
-
-### MongoDB Atlas
-1. Create free cluster
-2. Create database user
-3. Get connection string
-4. Add to backend environment variables
-5. Network access: Allow all IPs (0.0.0.0/0)
-
-### Cloudinary
-1. Create free account
-2. Get credentials from dashboard
-3. Add to backend environment variables
-
-## Running Locally
-
-### Backend
 ```bash
 cd server
 npm install
-# Configure .env file
 npm run dev
 ```
 
-### Frontend
 ```bash
 cd client
 npm install
-# Configure .env file
 npm run dev
 ```
 
-## Folder Structure Overview
+## Deployment
 
-### Backend (Production-Ready)
-The backend follows MVC pattern with separation of concerns:
-- **Controllers**: Business logic (NOT in routes)
-- **Routes**: Thin, only define endpoints
-- **Middleware**: Auth, validation, error handling
-- **Services**: Reusable logic (token generation)
-- **Validators**: Input validation schemas
+### Backend
+
+- Platform: Render
+- Root directory: `server`
+- Build command: `npm install`
+- Start command: `npm start`
+- Required env vars: all server variables listed above
 
 ### Frontend
-- **Context**: Global auth state
-- **API**: Axios instance with interceptors
-- **Components**: Reusable UI
-- **Pages**: Route components
 
-## Negative Rules Compliance
+- Platform: Vercel
+- Root directory: `client`
+- Build command: `npm run build`
+- Output directory: `dist`
+- Required env var:
 
-| Rule | Status |
-|------|--------|
-| No Supabase | ✅ Using custom MongoDB + JWT |
-| No Firebase | ✅ Using MongoDB + custom auth |
-| Production-ready structure | ✅ Controllers separate from routes |
-| Environment variables | ✅ All secrets in .env |
-| Ownership enforcement | ✅ Ownership middleware implemented |
+```env
+VITE_API_URL=https://your-render-service.onrender.com/api
+```
 
-## License
+### Deployment Notes
 
-This project is for assignment purposes.
+- Set `CLIENT_URL` on the backend to the exact Vercel domain.
+- Refresh-token cookies require HTTPS in production.
+- Cross-site auth between Vercel and Render depends on:
+  - `withCredentials: true` in Axios
+  - `sameSite: 'none'`
+  - `secure: true`
+  - correct CORS origin
+
+## Placeholder Marketplace Data
+
+Seed script:
+
+```bash
+cd server
+npm run seed
+```
+
+This creates a brand account and published placeholder products for marketplace testing.
+
+- Email: `seed.brand@marketnest.demo`
+- Password: `SeedBrand123!`
+
+## AI Usage
+
+AI assistance was used for code drafting, refactoring, and documentation. Final integration, debugging, and project-specific adjustments were applied within the repository codebase.

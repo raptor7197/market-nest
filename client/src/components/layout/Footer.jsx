@@ -10,84 +10,66 @@ import {
 
 const Footer = () => {
   return (
-    <footer className="bg-[#1A1A1A] text-[#E3E1DC] border-t-2 border-[#39FF14] font-mono">
-      <div className="max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
-          {/* Brand */}
-          <div className="md:col-span-1 space-y-6">
-            <div className="flex items-center gap-2 group cursor-default">
-              <div className="w-10 h-10 border border-[#39FF14] flex items-center justify-center rotate-45 group-hover:bg-[#39FF14] transition-colors duration-300">
-                <Compass className="h-6 w-6 text-[#E3E1DC] group-hover:text-[#1A1A1A] -rotate-45 transition-colors duration-300" />
+    <footer className="border-t border-gray-200 bg-charcoal text-white">
+      <div className="mx-auto max-w-7xl px-6 py-16">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-4">
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-charcoal">
+                <Compass className="h-6 w-6" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-black uppercase tracking-tighter">
+                <span className="text-xl font-extrabold tracking-tight">
                   MarketNest
                 </span>
-                <span className="text-[10px] text-[#39FF14] tracking-widest">
-                  EST. 2024
+                <span className="text-xs font-medium text-white/50">
+                  Trizen Ventures
                 </span>
               </div>
             </div>
-            <p className="text-xs leading-relaxed opacity-60 max-w-[200px]">
-              // PREMIER DESTINATION FOR DIGITAL COMMERCE.
-              <br />
-              CONNECT. TRANSACT. EVOLVE.
+            <p className="max-w-[230px] text-sm leading-relaxed text-white/60">
+              A calmer marketplace for discovering products from emerging
+              brands and managing every listing in one place.
             </p>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h3 className="text-[#39FF14] font-bold uppercase tracking-widest mb-6 text-sm flex items-center gap-2">
-              <span className="w-2 h-2 bg-[#39FF14]"></span>
+            <h3 className="mb-6 text-sm font-semibold text-white">
               Navigation
             </h3>
-            <ul className="space-y-3 text-xs uppercase tracking-wider">
-              <li>
-                <a
-                  href="/products"
-                  className="hover:text-[#39FF14] hover:pl-2 transition-all flex items-center gap-1 group"
-                >
-                  Browse Products
-                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/signup"
-                  className="hover:text-[#39FF14] hover:pl-2 transition-all flex items-center gap-1 group"
-                >
-                  Start Selling
-                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/login"
-                  className="hover:text-[#39FF14] hover:pl-2 transition-all flex items-center gap-1 group"
-                >
-                  Login
-                  <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </a>
-              </li>
+            <ul className="space-y-3 text-sm text-white/60">
+              {[
+                ["Browse Products", "/products"],
+                ["Start Selling", "/signup"],
+                ["Login", "/login"],
+              ].map(([label, href]) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    className="group flex items-center gap-1 transition-colors hover:text-white"
+                  >
+                    {label}
+                    <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
 
-          {/* Categories */}
           <div>
-            <h3 className="text-[#39FF14] font-bold uppercase tracking-widest mb-6 text-sm flex items-center gap-2">
-              <span className="w-2 h-2 bg-[#39FF14]"></span>
-              Index
+            <h3 className="mb-6 text-sm font-semibold text-white">
+              Categories
             </h3>
-            <ul className="space-y-3 text-xs uppercase tracking-wider">
+            <ul className="space-y-3 text-sm text-white/60">
               {["Clothing", "Shoes", "Accessories", "Bags", "Jewelry"].map(
                 (cat) => (
                   <li key={cat}>
                     <a
                       href={`/products?category=${cat.toLowerCase()}`}
-                      className="hover:text-[#39FF14] hover:pl-2 transition-all flex items-center gap-1 group"
+                      className="group flex items-center gap-1 transition-colors hover:text-white"
                     >
                       {cat}
-                      <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowUpRight className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
                     </a>
                   </li>
                 ),
@@ -95,36 +77,28 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact */}
           <div>
-            <h3 className="text-[#39FF14] font-bold uppercase tracking-widest mb-6 text-sm flex items-center gap-2">
-              <span className="w-2 h-2 bg-[#39FF14]"></span>
-              Comms
-            </h3>
-            <div className="space-y-4 text-xs">
-              <div className="flex items-center gap-3 group">
-                <div className="p-2 border border-[#E3E1DC] group-hover:border-[#39FF14] transition-colors">
-                  <Mail className="h-4 w-4 text-[#E3E1DC] group-hover:text-[#39FF14]" />
+            <h3 className="mb-6 text-sm font-semibold text-white">Contact</h3>
+            <div className="space-y-4 text-sm text-white/60">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full border border-white/10 p-2 text-white">
+                  <Mail className="h-4 w-4" />
                 </div>
-                <span className="uppercase tracking-wide">
-                  support@trizen.com
-                </span>
+                <span>support@trizen.com</span>
               </div>
-              <div className="flex items-center gap-3 group">
-                <div className="p-2 border border-[#E3E1DC] group-hover:border-[#39FF14] transition-colors">
-                  <MapPin className="h-4 w-4 text-[#E3E1DC] group-hover:text-[#39FF14]" />
+              <div className="flex items-center gap-3">
+                <div className="rounded-full border border-white/10 p-2 text-white">
+                  <MapPin className="h-4 w-4" />
                 </div>
-                <span className="uppercase tracking-wide">
-                  Metaverse, Grid 7
-                </span>
+                <span>Building with Trizen Ventures</span>
               </div>
 
-              <div className="flex gap-4 mt-6">
+              <div className="mt-6 flex gap-4">
                 {[Instagram, Twitter, Facebook].map((Icon, idx) => (
                   <a
                     key={idx}
                     href="#"
-                    className="p-2 bg-[#E3E1DC] text-[#1A1A1A] hover:bg-[#39FF14] hover:text-[#1A1A1A] hover:-translate-y-1 transition-all"
+                    className="rounded-full bg-white/10 p-2 text-white transition-all hover:-translate-y-0.5 hover:bg-white hover:text-charcoal"
                   >
                     <Icon className="h-4 w-4" />
                   </a>
@@ -134,16 +108,14 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-[#39FF14]/30 mt-16 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] uppercase tracking-widest opacity-60">
-          <p>
-            &copy; {new Date().getFullYear()} MarketNest // Trizen Ventures.
-          </p>
+        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/50 md:flex-row">
+          <p>&copy; {new Date().getFullYear()} MarketNest. Trizen Ventures.</p>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-[#39FF14]">
-              Privacy_Protocol
+            <a href="#" className="hover:text-white">
+              Privacy
             </a>
-            <a href="#" className="hover:text-[#39FF14]">
-              Terms_Of_Service
+            <a href="#" className="hover:text-white">
+              Terms
             </a>
           </div>
         </div>

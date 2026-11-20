@@ -1,320 +1,271 @@
 import { Link } from "react-router-dom";
 import {
+  ArrowRight,
+  CheckCircle2,
+  Compass,
+  Package,
+  Search,
+  Shield,
+  Sparkles,
   Store,
   Users,
-  Shield,
-  ArrowRight,
-  Compass,
-  MapPin,
 } from "lucide-react";
+
+const categories = ["Clothing", "Shoes", "Accessories", "Bags", "Jewelry"];
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-[#E3E1DC] text-[#1A1A1A] font-mono selection:bg-[#39FF14] selection:text-black overflow-x-hidden relative flex flex-col">
-      {/* Global Noise Overlay */}
-      <div
-        className="fixed inset-0 opacity-[0.08] pointer-events-none z-50 mix-blend-overlay"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-        }}
-      />
-
-      {/* Decorative Green Strokes (Hero) */}
-      <div className="absolute top-[20%] left-[15%] w-2 h-24 bg-[#39FF14] rotate-[-15deg] blur-[1px] mix-blend-multiply opacity-80 pointer-events-none" />
-      <div className="absolute top-[25%] left-[25%] w-1 h-16 bg-[#39FF14] rotate-[-25deg] blur-[1px] mix-blend-multiply opacity-60 pointer-events-none" />
-
-      {/* ================= HERO SECTION ================= */}
-      <section className="relative h-screen flex flex-col w-full border-b-2 border-[#1A1A1A]">
-        {/* Top Header Marquee */}
-        <header className="py-6 flex justify-between items-center px-6 border-b-2 border-[#1A1A1A] bg-[#E3E1DC] z-20">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-[#39FF14] rounded-full animate-pulse" />
-            <span className="text-xs md:text-sm font-bold tracking-[0.2em] uppercase">
-              MarketNest_V1.0
+    <div className="min-h-screen overflow-hidden bg-offwhite text-charcoal">
+      <header className="border-b border-gray-200/80 bg-white/85 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-charcoal text-white">
+              <Compass className="h-5 w-5" />
+            </div>
+            <span className="text-xl font-extrabold tracking-tight">
+              MarketNest
             </span>
-          </div>
-          <div className="hidden md:flex gap-8 text-xs font-bold uppercase tracking-widest">
+          </Link>
+
+          <nav className="hidden items-center gap-2 md:flex">
             <Link
               to="/products"
-              className="hover:bg-[#1A1A1A] hover:text-[#39FF14] px-2 py-1 transition-all"
+              className="rounded-full px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100"
             >
-              Shop
+              Marketplace
             </Link>
             <Link
               to="/login"
-              className="hover:bg-[#1A1A1A] hover:text-[#39FF14] px-2 py-1 transition-all"
+              className="rounded-full px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100"
             >
               Login
             </Link>
             <Link
               to="/signup"
-              className="hover:bg-[#1A1A1A] hover:text-[#39FF14] px-2 py-1 transition-all"
+              className="rounded-full bg-burnt px-5 py-2.5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(201,79,36,0.24)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600"
             >
-              Sell
+              Join as brand
             </Link>
-          </div>
-        </header>
-
-        {/* Center Content */}
-        <main className="flex-grow flex flex-col items-center justify-center relative z-10">
-          {/* NOISE */}
-          <div className="relative mb-2 group">
-            <h1 className="text-7xl md:text-9xl lg:text-[11rem] leading-[0.8] font-black tracking-tighter text-[#1A1A1A] scale-y-90 transform">
-              NOISE
-            </h1>
-            <div
-              className="absolute top-[40%] left-[-10%] w-[120%] h-2 bg-[#1A1A1A] rotate-[-2deg]"
-              style={{ clipPath: "polygon(0 0, 100% 40%, 95% 100%, 5% 60%)" }}
-            ></div>
-          </div>
-
-          {/* AND MAKE (Pill) */}
-          <div className="relative z-20 -my-4 md:-my-8">
-            <div className="border-[1.5px] border-[#1A1A1A] bg-[#E3E1DC] rounded-[100%] px-10 py-3 md:px-16 md:py-5 hover:bg-[#39FF14] transition-colors duration-300 cursor-pointer">
-              <span className="text-lg md:text-2xl font-sans font-bold uppercase tracking-widest">
-                And Make
-              </span>
-            </div>
-          </div>
-
-          {/* Color (Script) */}
-          <div className="relative z-10 -mt-2">
-            <h2 className="text-6xl md:text-9xl font-serif italic text-[#1A1A1A] rotate-[-5deg] mix-blend-difference opacity-90">
-              Color
-            </h2>
-          </div>
-
-          {/* SHIFT */}
-          <div className="relative mt-2 group">
-            <h1 className="text-7xl md:text-9xl lg:text-[11rem] leading-[0.8] font-black tracking-tighter text-[#1A1A1A] scale-y-90 transform">
-              SHIFT
-            </h1>
-            <div className="absolute -right-8 bottom-4 w-1 h-24 bg-[#39FF14] rotate-[15deg] group-hover:rotate-[45deg] transition-transform duration-500"></div>
-          </div>
-
-          {/* Absolute patterns */}
-          <div
-            className="absolute top-10 left-10 w-24 h-24 border border-[#1A1A1A] opacity-50 flex items-center justify-center rounded-full animate-[spin_10s_linear_infinite]"
-            style={{ borderStyle: "dashed" }}
-          >
-            <div className="w-2 h-2 bg-[#1A1A1A] rounded-full" />
-          </div>
-        </main>
-
-        {/* Hero Footer */}
-        <div className="border-t-2 border-[#1A1A1A] grid grid-cols-2 md:grid-cols-4 divide-x-2 divide-[#1A1A1A]">
-          <div className="p-4 flex flex-col justify-between h-32 hover:bg-[#1A1A1A] hover:text-[#E3E1DC] transition-colors group cursor-default">
-            <span className="text-xs uppercase tracking-widest">Brands</span>
-            <span className="text-4xl font-bold">500+</span>
-          </div>
-          <div className="p-4 flex flex-col justify-between h-32 hover:bg-[#1A1A1A] hover:text-[#E3E1DC] transition-colors group cursor-default">
-            <span className="text-xs uppercase tracking-widest">Products</span>
-            <span className="text-4xl font-bold">10K+</span>
-          </div>
-          <div className="p-4 flex flex-col justify-between h-32 hover:bg-[#1A1A1A] hover:text-[#E3E1DC] transition-colors group cursor-default">
-            <span className="text-xs uppercase tracking-widest">Users</span>
-            <span className="text-4xl font-bold">50K+</span>
-          </div>
-          <Link
-            to="/products"
-            className="p-4 flex flex-col justify-between h-32 bg-[#39FF14] hover:bg-[#32d710] transition-colors cursor-pointer text-black"
-          >
-            <span className="text-xs uppercase tracking-widest flex justify-between">
-              Enter <ArrowRight size={16} />
-            </span>
-            <span className="text-4xl font-bold">SHOP</span>
-          </Link>
+          </nav>
         </div>
-      </section>
+      </header>
 
-      {/* ================= MARQUEE STRIP ================= */}
-      <div className="bg-[#1A1A1A] text-[#E3E1DC] overflow-hidden py-3 border-b-2 border-[#1A1A1A]">
-        <div className="animate-[slide_20s_linear_infinite] whitespace-nowrap">
-          {Array(10)
-            .fill(" DISCOVER YOUR NEXT LOOK — TRIZEN VENTURES — ")
-            .map((text, i) => (
-              <span
-                key={i}
-                className="text-sm font-bold tracking-[0.3em] inline-block mx-4"
-              >
-                {text}
-              </span>
-            ))}
-        </div>
-      </div>
-
-      {/* ================= FEATURES SECTION ================= */}
-      <section className="py-24 px-6 md:px-12 bg-[#E3E1DC] relative">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-16 border-l-4 border-[#39FF14] pl-6">
-            <h2 className="text-5xl md:text-7xl font-black text-[#1A1A1A] mb-4 uppercase tracking-tighter">
-              Why
-              <br />
-              Choose Us
-            </h2>
-            <p className="text-lg md:text-xl font-bold text-[#1A1A1A]/60 max-w-xl">
-              BUILT FOR THE BOLD. DESIGNED FOR COMMERCE.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="group border-2 border-[#1A1A1A] p-8 hover:bg-[#1A1A1A] hover:text-[#E3E1DC] transition-all duration-300 relative">
-              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Store className="w-8 h-8 text-[#39FF14]" />
-              </div>
-              <h3 className="text-2xl font-bold uppercase mb-4 group-hover:text-[#39FF14]">
-                For Brands
-              </h3>
-              <p className="text-sm leading-relaxed opacity-80">
-                Create your online store. Manage products effortlessly. Reach
-                thousands. No compromise.
+      <main>
+        <section className="relative">
+          <div className="absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_20%_20%,rgba(201,79,36,0.14),transparent_34%),radial-gradient(circle_at_80%_0%,rgba(22,128,122,0.12),transparent_28%)]" />
+          <div className="relative mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:px-8 lg:py-24">
+            <div className="flex flex-col justify-center">
+              <h1 className="max-w-4xl text-5xl font-extrabold tracking-tight text-charcoal sm:text-6xl lg:text-7xl">
+                Discover products built by emerging brands.
+              </h1>
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-600">
+                MarketNest gives customers a polished place to browse and gives
+                brands a focused dashboard for listing, editing, and managing
+                products.
               </p>
-              <div className="mt-8 h-1 w-full bg-[#1A1A1A] group-hover:bg-[#39FF14]" />
-            </div>
-
-            {/* Feature 2 */}
-            <div className="group border-2 border-[#1A1A1A] p-8 bg-[#1A1A1A] text-[#E3E1DC] relative top-0 md:-top-8 shadow-[8px_8px_0px_0px_#39FF14]">
-              <div className="absolute top-4 right-4">
-                <Users className="w-8 h-8 text-[#39FF14]" />
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to="/products"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-burnt px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(201,79,36,0.25)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600"
+                >
+                  Browse marketplace
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  to="/signup"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-charcoal shadow-sm transition-all hover:-translate-y-0.5 hover:border-burnt/30"
+                >
+                  Join as brand
+                </Link>
               </div>
-              <h3 className="text-2xl font-bold uppercase mb-4 text-[#39FF14]">
-                For Users
-              </h3>
-              <p className="text-sm leading-relaxed opacity-80">
-                Curated fashion from top brands. Powerful search. Filter the
-                noise. Find the signal.
-              </p>
-              <div className="mt-8 h-1 w-full bg-[#39FF14]" />
-            </div>
 
-            {/* Feature 3 */}
-            <div className="group border-2 border-[#1A1A1A] p-8 hover:bg-[#1A1A1A] hover:text-[#E3E1DC] transition-all duration-300 relative">
-              <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Shield className="w-8 h-8 text-[#39FF14]" />
-              </div>
-              <h3 className="text-2xl font-bold uppercase mb-4 group-hover:text-[#39FF14]">
-                Secure
-              </h3>
-              <p className="text-sm leading-relaxed opacity-80">
-                Enterprise-grade security. Seamless authentication.
-                Lightning-fast. Rock solid.
-              </p>
-              <div className="mt-8 h-1 w-full bg-[#1A1A1A] group-hover:bg-[#39FF14]" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ================= CATEGORIES SECTION ================= */}
-      <section className="bg-[#1A1A1A] text-[#E3E1DC] py-24 border-y-2 border-[#39FF14]">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-b border-[#E3E1DC]/20 pb-8">
-            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter">
-              Category<span className="text-[#39FF14]">.Idx</span>
-            </h2>
-            <span className="text-[#39FF14] font-mono mt-4 md:mt-0">
-              // SELECT_FILTER_MODE
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-px bg-[#39FF14] border border-[#39FF14]">
-            {[
-              { name: "Clothing", count: "2.4K" },
-              { name: "Shoes", count: "1.8K" },
-              { name: "Accessories", count: "3.2K" },
-              { name: "Bags", count: "1.5K" },
-              { name: "Jewelry", count: "2.1K" },
-            ].map((cat, idx) => (
-              <Link
-                key={cat.name}
-                to={`/products?category=${cat.name.toLowerCase()}`}
-                className="bg-[#1A1A1A] p-6 hover:bg-[#E3E1DC] hover:text-[#1A1A1A] transition-colors group aspect-square flex flex-col justify-between"
-              >
-                <span className="text-xs font-mono text-[#39FF14] group-hover:text-[#1A1A1A]">
-                  0{idx + 1}
-                </span>
-                <div>
-                  <div className="text-2xl font-bold uppercase mb-1">
-                    {cat.name}
+              <div className="mt-10 grid max-w-2xl grid-cols-3 gap-3">
+                {[
+                  ["500+", "Brands"],
+                  ["10K+", "Products"],
+                  ["50K+", "Users"],
+                ].map(([value, label]) => (
+                  <div
+                    key={label}
+                    className="rounded-3xl border border-gray-200 bg-white/80 p-4 shadow-sm backdrop-blur"
+                  >
+                    <p className="text-2xl font-extrabold tracking-tight text-charcoal">
+                      {value}
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-gray-500">
+                      {label}
+                    </p>
                   </div>
-                  <div className="text-xs opacity-60 font-mono">
-                    {cat.count} ITEMS
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="rounded-[2rem] border border-gray-200 bg-white p-4 shadow-soft">
+                <div className="rounded-[1.5rem] bg-charcoal p-4 text-white">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-semibold text-white/60">
+                        Live marketplace
+                      </p>
+                      <h2 className="mt-1 text-2xl font-extrabold">
+                        Curated drop
+                      </h2>
+                    </div>
+                    <div className="rounded-full bg-white/10 p-3">
+                      <Sparkles className="h-5 w-5 text-white" />
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl bg-white p-3 text-charcoal">
+                    <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                      <Search className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-500">
+                        Search products
+                      </span>
+                    </div>
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      {[
+                        ["Studio Jacket", "$88.00"],
+                        ["Daily Tote", "$42.00"],
+                        ["Runner Low", "$120.00"],
+                        ["Pearl Hoops", "$35.00"],
+                      ].map(([name, price], index) => (
+                        <div
+                          key={name}
+                          className="overflow-hidden rounded-2xl border border-gray-200 bg-white"
+                        >
+                          <div
+                            className={`aspect-[4/3] ${
+                              index === 0
+                                ? "bg-burnt-100"
+                                : index === 1
+                                  ? "bg-slate-100"
+                                  : index === 2
+                                    ? "bg-[#dcefeb]"
+                                    : "bg-gray-100"
+                            }`}
+                          />
+                          <div className="p-3">
+                            <p className="truncate text-sm font-bold">{name}</p>
+                            <p className="mt-1 text-sm font-semibold text-burnt">
+                              {price}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              <div className="absolute -bottom-6 -left-3 hidden rounded-3xl border border-gray-200 bg-white p-4 shadow-card sm:block">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-2xl bg-[#e7f5f2] p-3 text-[#16807a]">
+                    <CheckCircle2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-charcoal">
+                      Brand dashboard ready
+                    </p>
+                    <p className="text-xs font-medium text-gray-500">
+                      Publish, draft, archive
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="border-y border-gray-200 bg-white py-8">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 sm:px-6 lg:px-8">
+            {categories.map((cat) => (
+              <Link
+                key={cat}
+                to={`/products?category=${cat.toLowerCase()}`}
+                className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:-translate-y-0.5 hover:border-burnt/30 hover:text-burnt"
+              >
+                {cat}
               </Link>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ================= CTA SECTION ================= */}
-      <section className="py-32 px-6 bg-[#E3E1DC] flex flex-col items-center text-center relative overflow-hidden">
-        {/* Background Grid */}
-        <div
-          className="absolute inset-0 opacity-10 pointer-events-none"
-          style={{
-            backgroundImage: `linear-gradient(#1A1A1A 1px, transparent 1px), linear-gradient(90deg, #1A1A1A 1px, transparent 1px)`,
-            backgroundSize: "40px 40px",
-          }}
-        ></div>
-
-        <div className="relative z-10 max-w-4xl">
-          <h2 className="text-5xl md:text-8xl font-black text-[#1A1A1A] mb-8 uppercase leading-[0.9]">
-            Start Your
-            <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#39FF14] to-[#1A1A1A]">
-              Journey
-            </span>
-          </h2>
-
-          <div className="flex flex-col md:flex-row gap-6 justify-center mt-12">
-            <Link
-              to="/signup"
-              className="px-12 py-4 bg-[#1A1A1A] text-[#39FF14] text-xl font-bold uppercase tracking-widest hover:bg-[#39FF14] hover:text-[#1A1A1A] transition-all border-2 border-[#1A1A1A] shadow-[4px_4px_0px_0px_#1A1A1A] hover:translate-x-1 hover:translate-y-1 hover:shadow-none"
-            >
-              Create Account
-            </Link>
-            <Link
-              to="/products"
-              className="px-12 py-4 bg-transparent text-[#1A1A1A] text-xl font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-[#E3E1DC] transition-all border-2 border-[#1A1A1A]"
-            >
-              Browse All
-            </Link>
+        <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            {[
+              [
+                Store,
+                "For brands",
+                "Create listings, upload images, set status, and manage the full product table from one focused dashboard.",
+              ],
+              [
+                Users,
+                "For customers",
+                "Browse categories, search the catalog, inspect product details, and move through a polished shopping surface.",
+              ],
+              [
+                Shield,
+                "Built cleanly",
+                "Authentication, protected brand routes, and ownership controls stay behind the scenes while the UI feels simple.",
+              ],
+            ].map(([Icon, title, copy]) => (
+              <div
+                key={title}
+                className="rounded-[1.75rem] border border-gray-200 bg-white p-6 shadow-card"
+              >
+                <div className="mb-8 flex h-12 w-12 items-center justify-center rounded-2xl bg-burnt-50 text-burnt">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h2 className="text-xl font-extrabold tracking-tight text-charcoal">
+                  {title}
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-gray-600">{copy}</p>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ================= FOOTER PROMO ================= */}
-      <footer className="bg-[#1A1A1A] text-[#E3E1DC] py-8 border-t border-[#39FF14]">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 border border-[#39FF14] flex items-center justify-center rotate-45">
-              <div className="w-6 h-6 bg-[#39FF14] -rotate-45" />
+        <section className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+          <div className="grid overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-soft md:grid-cols-[0.95fr_1.05fr]">
+            <div className="bg-charcoal p-8 text-white sm:p-10">
+              <Package className="h-9 w-9 text-white/80" />
+              <h2 className="mt-8 max-w-md text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Bring your product catalog into a sharper storefront.
+              </h2>
+              <p className="mt-4 max-w-md text-sm leading-6 text-white/60">
+                Keep products organized as drafts or published listings, then
+                let buyers discover them through a clean marketplace.
+              </p>
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold tracking-widest uppercase text-lg">
-                MarketNest
-              </span>
-              <span className="text-[10px] text-[#39FF14] font-mono">
-                POWERED BY TRIZEN VENTURES
-              </span>
+            <div className="p-8 sm:p-10">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {["Upload images", "Set category", "Update price", "Archive old products"].map(
+                  (item) => (
+                    <div
+                      key={item}
+                      className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4"
+                    >
+                      <CheckCircle2 className="h-5 w-5 text-[#16807a]" />
+                      <span className="text-sm font-semibold text-charcoal">
+                        {item}
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+              <Link
+                to="/signup"
+                className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-burnt px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(201,79,36,0.25)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600"
+              >
+                Create account
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </div>
-
-          <div className="flex items-center gap-2 text-xs font-mono opacity-60">
-            <MapPin size={12} />
-            <span>BUILDING_THE_FUTURE_OF_FASHION</span>
-          </div>
-        </div>
-      </footer>
-
-      <style>{`
-        @keyframes slide {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-        }
-      `}</style>
+        </section>
+      </main>
     </div>
   );
 };

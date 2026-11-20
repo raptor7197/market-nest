@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ArrowRight, Lock, Mail } from "lucide-react";
+import { ArrowRight, Lock, Mail, Sparkles } from "lucide-react";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +12,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.from?.pathname || "/products";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,8 +24,8 @@ const Login = () => {
     setError("");
     setLoading(true);
     try {
-      await login(formData);
-      navigate("/products");
+      await login(formData.email, formData.password);
+      navigate(redirectTo);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to login");
     } finally {
@@ -32,131 +34,145 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E3E1DC] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-mono relative overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-5">
-        <div className="absolute top-10 left-10 text-9xl font-black">LOGIN</div>
-        <div className="absolute bottom-10 right-10 text-9xl font-black">
-          ACCESS
-        </div>
-      </div>
-
-      <div className="max-w-md w-full space-y-8 bg-white p-8 border-2 border-[#1A1A1A] shadow-[8px_8px_0px_0px_#1A1A1A] relative z-10">
-        <div>
-          <div className="mx-auto h-12 w-12 bg-[#39FF14] border-2 border-[#1A1A1A] flex items-center justify-center">
-            <Lock className="h-6 w-6 text-[#1A1A1A]" />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-black text-[#1A1A1A] uppercase tracking-tighter">
-            System_Access
-          </h2>
-          <p className="mt-2 text-center text-sm text-[#1A1A1A]/60 font-bold uppercase tracking-widest">
-            // Enter credentials to proceed
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-[#FF3939]/10 border-2 border-[#FF3939] text-[#FF3939] p-3 text-sm font-bold uppercase flex items-center gap-2">
-              <span className="text-xl">!</span> {error}
+    <div className="min-h-screen bg-offwhite px-4 py-12 sm:px-6 lg:px-8">
+      <div className="mx-auto grid min-h-[calc(100vh-10rem)] max-w-6xl overflow-hidden rounded-[2rem] border border-gray-200 bg-white shadow-soft lg:grid-cols-[0.95fr_1.05fr]">
+        <div className="hidden bg-charcoal p-10 text-white lg:flex lg:flex-col lg:justify-between">
+          <div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-charcoal">
+              <Sparkles className="h-6 w-6" />
             </div>
-          )}
-
-          <div className="space-y-4">
-            <div className="group">
-              <label
-                htmlFor="email"
-                className="block text-xs font-bold uppercase mb-1"
-              >
-                Email_Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-[#1A1A1A]/40" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-3 pl-10 border-2 border-[#1A1A1A] placeholder-[#1A1A1A]/30 text-[#1A1A1A] focus:outline-none focus:ring-0 focus:border-[#39FF14] focus:bg-[#39FF14]/5 transition-colors sm:text-sm font-bold"
-                  placeholder="USER@DOMAIN.COM"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <div className="group">
-              <label
-                htmlFor="password"
-                className="block text-xs font-bold uppercase mb-1"
-              >
-                Password_Key
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-[#1A1A1A]/40" />
-                </div>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-3 pl-10 border-2 border-[#1A1A1A] placeholder-[#1A1A1A]/30 text-[#1A1A1A] focus:outline-none focus:ring-0 focus:border-[#39FF14] focus:bg-[#39FF14]/5 transition-colors sm:text-sm font-bold"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-[#39FF14] focus:ring-[#39FF14] border-gray-300 rounded"
-              />
-              <label
-                htmlFor="remember-me"
-                className="ml-2 block text-xs text-[#1A1A1A] font-bold uppercase"
-              >
-                Remember_Me
-              </label>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="group relative w-full flex justify-center py-3 px-4 border-2 border-[#1A1A1A] text-sm font-black uppercase tracking-widest text-[#1A1A1A] bg-[#39FF14] hover:bg-[#32d710] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#39FF14] disabled:opacity-50 disabled:cursor-not-allowed shadow-[4px_4px_0px_0px_#1A1A1A] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all"
-          >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <span className="w-4 h-4 border-2 border-[#1A1A1A] border-t-transparent rounded-full animate-spin"></span>
-                Authenticating...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                Init_Session <ArrowRight className="h-4 w-4" />
-              </span>
-            )}
-          </button>
-
-          <div className="text-center mt-4">
-            <p className="text-xs font-bold uppercase">
-              No_Credentials?{" "}
-              <Link
-                to="/signup"
-                className="text-[#1A1A1A] underline decoration-2 decoration-[#39FF14] hover:bg-[#39FF14] transition-colors"
-              >
-                Register_New_User
-              </Link>
+            <h1 className="mt-10 max-w-sm text-4xl font-extrabold tracking-tight">
+              Step back into your marketplace.
+            </h1>
+            <p className="mt-4 max-w-sm text-sm leading-6 text-white/60">
+              Manage listings, browse products, and continue where you left off
+              with the same secure account flow.
             </p>
           </div>
-        </form>
+          <div className="grid grid-cols-2 gap-3">
+            {["Protected routes", "Brand dashboard", "Product catalog", "Fast search"].map(
+              (item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/80"
+                >
+                  {item}
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-center p-6 sm:p-10">
+          <div className="w-full max-w-md">
+            <div className="text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-burnt-50 text-burnt">
+                <Lock className="h-6 w-6" />
+              </div>
+              <h2 className="mt-6 text-3xl font-extrabold tracking-tight text-charcoal">
+                Login
+              </h2>
+              <p className="mt-2 text-sm text-gray-500">
+                Enter your credentials to continue.
+              </p>
+            </div>
+
+            <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
+              {error && (
+                <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+                  {error}
+                </div>
+              )}
+
+              <div>
+                <label
+                  htmlFor="email"
+                  className="mb-2 block text-sm font-semibold text-charcoal"
+                >
+                  Email address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 pl-12 text-sm text-charcoal outline-none transition-all placeholder:text-gray-400 focus:border-burnt focus:ring-4 focus:ring-burnt/10"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-semibold text-charcoal"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 pl-12 text-sm text-charcoal outline-none transition-all placeholder:text-gray-400 focus:border-burnt focus:ring-4 focus:ring-burnt/10"
+                    placeholder="Password"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-gray-300 text-burnt focus:ring-burnt"
+                />
+                <label
+                  htmlFor="remember-me"
+                  className="ml-2 block text-sm font-medium text-gray-600"
+                >
+                  Remember me
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-burnt px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(201,79,36,0.25)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner h-4 w-4 border-2" />
+                    Authenticating
+                  </>
+                ) : (
+                  <>
+                    Login
+                    <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </button>
+
+              <p className="text-center text-sm text-gray-600">
+                No account?{" "}
+                <Link
+                  to="/signup"
+                  className="font-semibold text-burnt hover:text-burnt-600"
+                >
+                  Sign up
+                </Link>
+              </p>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
   );

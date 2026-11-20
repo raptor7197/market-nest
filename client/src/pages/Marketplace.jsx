@@ -2,7 +2,13 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { productApi } from "../api/productApi";
 import ProductCard from "../components/product/ProductCard";
-import { Search, Filter, ArrowLeft, ArrowRight } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Filter,
+  PackageOpen,
+  Search,
+} from "lucide-react";
 
 const CATEGORIES = ["clothing", "shoes", "accessories", "bags", "jewelry"];
 
@@ -57,52 +63,53 @@ const Marketplace = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#E3E1DC] text-[#1A1A1A] font-mono selection:bg-[#39FF14] selection:text-black">
-      {/* Header Section */}
-      <div className="border-b-2 border-[#1A1A1A] bg-[#E3E1DC]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-4xl md:text-6xl font-black uppercase tracking-tighter mb-4">
-            Marketplace<span className="text-[#39FF14]">_</span>
-          </h1>
-          <p className="text-sm md:text-base font-bold tracking-widest uppercase opacity-60">
-            // CURATED_ITEMS_FOR_THE_MODERN_ERA
-          </p>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Controls Section */}
-        <div className="flex flex-col lg:flex-row gap-6 mb-12 border-2 border-[#1A1A1A] p-6 bg-white shadow-[8px_8px_0px_0px_#1A1A1A]">
-          {/* Search */}
-          <div className="flex-1 relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#1A1A1A]" />
-            <input
-              type="text"
-              placeholder="SEARCH_DATABASE..."
-              value={search}
-              onChange={handleSearch}
-              className="w-full pl-12 pr-4 py-3 bg-[#E3E1DC] border-2 border-transparent focus:border-[#1A1A1A] outline-none text-sm font-bold uppercase placeholder:text-[#1A1A1A]/40 transition-all"
-            />
-            <div className="absolute bottom-0 left-0 h-0.5 w-0 bg-[#39FF14] transition-all group-focus-within:w-full"></div>
-          </div>
-
-          {/* Filters */}
-          <div className="flex items-center gap-4 overflow-x-auto pb-2 lg:pb-0">
-            <div className="flex items-center gap-2 px-3 border-r-2 border-[#1A1A1A]">
-              <Filter className="h-5 w-5" />
-              <span className="text-xs font-bold uppercase hidden sm:inline">
-                Filter:
-              </span>
+    <div className="min-h-screen bg-offwhite text-charcoal">
+      <section className="border-b border-gray-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+            <div>
+              <h1 className="text-4xl font-extrabold tracking-tight text-charcoal sm:text-5xl">
+                Marketplace
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-gray-600">
+                Browse products from emerging brands with quick category
+                filters and responsive search.
+              </p>
             </div>
-            <div className="flex gap-2">
+            <div className="rounded-full border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-600">
+              {pagination?.totalItems || products.length || 0} products
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-10 rounded-[2rem] border border-gray-200 bg-white p-4 shadow-card">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search products"
+                value={search}
+                onChange={handleSearch}
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 py-3 pl-12 pr-4 text-sm font-medium text-charcoal outline-none transition-all placeholder:text-gray-400 focus:border-burnt focus:bg-white focus:ring-4 focus:ring-burnt/10"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 overflow-x-auto pb-1 lg:pb-0">
+              <div className="flex shrink-0 items-center gap-2 text-sm font-semibold text-gray-500">
+                <Filter className="h-4 w-4" />
+                Filter
+              </div>
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => handleCategory(cat)}
-                  className={`px-4 py-2 text-xs font-bold uppercase tracking-wider border-2 border-[#1A1A1A] transition-all hover:-translate-y-1 hover:shadow-[4px_4px_0px_0px_#1A1A1A] whitespace-nowrap ${
+                  className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold capitalize transition-all ${
                     category === cat
-                      ? "bg-[#1A1A1A] text-[#39FF14]"
-                      : "bg-[#E3E1DC] text-[#1A1A1A] hover:bg-[#39FF14]"
+                      ? "bg-charcoal text-white shadow-[0_12px_28px_rgba(23,23,23,0.18)]"
+                      : "border border-gray-200 bg-white text-gray-700 hover:border-burnt/30 hover:text-burnt"
                   }`}
                 >
                   {cat}
@@ -112,54 +119,55 @@ const Marketplace = () => {
           </div>
         </div>
 
-        {/* Content */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="w-16 h-16 border-4 border-[#1A1A1A] border-t-[#39FF14] rounded-full animate-spin"></div>
-            <p className="mt-6 font-bold uppercase tracking-widest animate-pulse">
-              Loading_Assets...
+          <div className="flex flex-col items-center justify-center py-28">
+            <div className="spinner h-12 w-12" />
+            <p className="mt-5 text-sm font-semibold text-gray-500">
+              Loading products
             </p>
           </div>
         ) : products.length === 0 ? (
-          <div className="text-center py-32 border-2 border-dashed border-[#1A1A1A] bg-[#1A1A1A]/5">
-            <p className="text-2xl font-bold uppercase text-[#1A1A1A]">
-              No items found
+          <div className="rounded-[2rem] border border-dashed border-gray-300 bg-white p-12 text-center shadow-sm">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-500">
+              <PackageOpen className="h-7 w-7" />
+            </div>
+            <p className="mt-5 text-2xl font-extrabold text-charcoal">
+              No products found
             </p>
-            <p className="text-sm font-mono mt-2 opacity-60">
-              // TRY_DIFFERENT_PARAMETERS
+            <p className="mt-2 text-sm text-gray-500">
+              Try a different search term or category.
             </p>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {products.map((product) => (
-                <div key={product._id} className="group">
-                  <ProductCard product={product} />
-                </div>
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
 
-            {/* Pagination */}
             {pagination && pagination.totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-16 pb-12">
+              <div className="mt-14 flex items-center justify-center gap-4 pb-10">
                 <button
                   onClick={() => setPage(page - 1)}
                   disabled={!pagination.hasPrevPage}
-                  className="p-3 border-2 border-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1A1A1A] hover:text-[#39FF14] transition-all disabled:hover:bg-transparent disabled:hover:text-inherit"
+                  className="rounded-full border border-gray-200 bg-white p-3 text-charcoal shadow-sm transition-all hover:-translate-y-0.5 hover:border-burnt/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                  aria-label="Previous page"
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="h-5 w-5" />
                 </button>
 
-                <span className="font-bold font-mono px-4">
-                  PAGE {pagination.currentPage} / {pagination.totalPages}
+                <span className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-gray-700 shadow-sm">
+                  Page {pagination.currentPage} of {pagination.totalPages}
                 </span>
 
                 <button
                   onClick={() => setPage(page + 1)}
                   disabled={!pagination.hasNextPage}
-                  className="p-3 border-2 border-[#1A1A1A] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#1A1A1A] hover:text-[#39FF14] transition-all disabled:hover:bg-transparent disabled:hover:text-inherit"
+                  className="rounded-full border border-gray-200 bg-white p-3 text-charcoal shadow-sm transition-all hover:-translate-y-0.5 hover:border-burnt/30 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:translate-y-0"
+                  aria-label="Next page"
                 >
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="h-5 w-5" />
                 </button>
               </div>
             )}

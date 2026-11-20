@@ -1,10 +1,43 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
-import { Compass, User, LogOut, LayoutDashboard, Menu, X } from "lucide-react";
+import { useCart } from "../../context/CartContext";
+import {
+  Compass,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Package,
+  ShoppingBag,
+  User,
+  X,
+} from "lucide-react";
+
+const navLinkClass =
+  "text-sm font-medium text-gray-600 transition-colors hover:text-charcoal";
+
+const actionLinkClass =
+  "inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-semibold transition-colors";
+
+const CartButton = ({ count, onClick }) => (
+  <Link
+    to="/checkout"
+    onClick={onClick}
+    className="relative rounded-full border border-gray-200 p-2.5 text-charcoal transition-colors hover:bg-gray-100"
+    aria-label={`Cart with ${count} items`}
+  >
+    <ShoppingBag className="h-5 w-5" />
+    {count > 0 && (
+      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-burnt px-1 text-[10px] font-bold text-white">
+        {count}
+      </span>
+    )}
+  </Link>
+);
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { itemCount } = useCart();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -13,140 +46,188 @@ const Navbar = () => {
     navigate("/");
   };
 
+  const showCart = !user || user.role === "customer";
+
   return (
-    <nav className="bg-[#E3E1DC] border-b-2 border-[#1A1A1A] sticky top-0 z-50 font-mono text-[#1A1A1A]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-[#1A1A1A] flex items-center justify-center group-hover:bg-[#39FF14] transition-colors border border-[#1A1A1A]">
-              <Compass className="h-5 w-5 text-[#39FF14] group-hover:text-[#1A1A1A] transition-colors" />
+    <nav className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 text-charcoal backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-200 bg-charcoal text-white">
+              <Compass className="h-5 w-5" />
             </div>
-            <span className="text-xl font-black uppercase tracking-tighter">
-              MarketNest
-            </span>
+            <div className="leading-tight">
+              <span className="block text-sm font-extrabold tracking-tight sm:text-base">
+                MarketNest
+              </span>
+              <span className="block text-[11px] font-medium text-gray-500">
+                product marketplace
+              </span>
+            </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link
-              to="/products"
-              className="px-3 py-1 font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-[#39FF14] transition-all"
-            >
+          <div className="hidden items-center gap-8 md:flex">
+            <Link to="/products" className={navLinkClass}>
               Marketplace
             </Link>
 
+            {user && user.role === "brand" && (
+              <>
+                <Link to="/dashboard" className={navLinkClass}>
+                  Dashboard
+                </Link>
+                <Link to="/dashboard/orders" className={navLinkClass}>
+                  Orders
+                </Link>
+              </>
+            )}
+
+            {user && user.role === "customer" && (
+              <Link to="/orders" className={navLinkClass}>
+                My Orders
+              </Link>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {showCart && <CartButton count={itemCount} />}
+
             {user ? (
-              <div className="flex items-center gap-6">
-                {user.role === "brand" && (
-                  <Link
-                    to="/dashboard"
-                    className="flex items-center gap-2 px-3 py-1 font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-[#39FF14] transition-all"
-                  >
-                    <LayoutDashboard className="h-4 w-4" />
-                    Dashboard
-                  </Link>
-                )}
-                <div className="flex items-center gap-4 pl-6 border-l-2 border-[#1A1A1A]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 border border-[#1A1A1A] flex items-center justify-center bg-[#39FF14]">
-                      <User className="h-4 w-4 text-[#1A1A1A]" />
-                    </div>
-                    <span className="text-xs font-bold uppercase">
-                      {user.name}
-                    </span>
+              <div className="hidden items-center gap-3 md:flex">
+                <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-burnt-50 text-burnt">
+                    <User className="h-4 w-4" />
                   </div>
-                  <button
-                    onClick={handleLogout}
-                    className="p-1 hover:bg-[#FF3939] hover:text-white transition-colors border border-transparent hover:border-[#1A1A1A]"
-                    title="Logout"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </button>
+                  <span className="max-w-[160px] truncate text-sm font-semibold text-gray-700">
+                    {user.name}
+                  </span>
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-charcoal"
+                  title="Logout"
+                  aria-label="Logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
               </div>
             ) : (
-              <div className="flex items-center gap-4">
-                <Link
-                  to="/login"
-                  className="px-4 py-2 font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-[#39FF14] transition-all"
-                >
+              <div className="hidden items-center gap-2 md:flex">
+                <Link to="/login" className={`${actionLinkClass} text-gray-600 hover:bg-gray-100 hover:text-charcoal`}>
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="px-6 py-2 bg-[#1A1A1A] text-[#39FF14] font-bold uppercase tracking-widest border-2 border-[#1A1A1A] hover:bg-[#39FF14] hover:text-[#1A1A1A] transition-all shadow-[4px_4px_0px_0px_rgba(26,26,26,0.3)] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px]"
+                  className={`${actionLinkClass} bg-burnt text-white shadow-[0_12px_28px_rgba(201,79,36,0.18)] hover:bg-burnt-600`}
                 >
-                  Sign Up
+                  Sign up
                 </Link>
               </div>
             )}
-          </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 border-2 border-[#1A1A1A] hover:bg-[#1A1A1A] hover:text-[#39FF14] transition-colors"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
-          </button>
+            <button
+              className="rounded-full border border-gray-200 p-2 text-charcoal transition-colors hover:bg-gray-100 md:hidden"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              aria-label="Toggle navigation menu"
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t-2 border-[#1A1A1A] bg-[#E3E1DC]">
-          <div className="flex flex-col p-4 gap-4">
+        <div className="border-t border-gray-200 bg-white md:hidden">
+          <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 sm:px-6">
             <Link
               to="/products"
-              className="py-2 px-4 font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-[#39FF14] border border-transparent hover:border-[#1A1A1A] transition-all"
+              className="rounded-2xl px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-charcoal"
               onClick={() => setMobileMenuOpen(false)}
             >
               Marketplace
             </Link>
-            {user ? (
+            {user && user.role === "brand" && (
               <>
-                {user.role === "brand" && (
-                  <Link
-                    to="/dashboard"
-                    className="py-2 px-4 font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-[#39FF14] border border-transparent hover:border-[#1A1A1A] transition-all"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                )}
-                <div className="py-2 px-4 flex items-center justify-between border-t border-[#1A1A1A] mt-2 pt-4">
-                  <span className="font-bold uppercase">{user.name}</span>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="text-[#FF3939] font-bold uppercase hover:underline"
-                  >
-                    Logout
-                  </button>
-                </div>
+                <Link
+                  to="/dashboard"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-charcoal"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/dashboard/orders"
+                  className="rounded-2xl px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-charcoal"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Orders
+                </Link>
               </>
+            )}
+            {user && user.role === "customer" && (
+              <Link
+                to="/orders"
+                className="rounded-2xl px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-charcoal"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                My Orders
+              </Link>
+            )}
+            {showCart && (
+              <Link
+                to="/checkout"
+                className="flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-charcoal"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className="flex items-center gap-2">
+                  <Package className="h-4 w-4" />
+                  Cart
+                </span>
+                <span className="rounded-full bg-burnt px-2 py-0.5 text-xs font-bold text-white">
+                  {itemCount}
+                </span>
+              </Link>
+            )}
+
+            {user ? (
+              <div className="mt-2 flex items-center justify-between rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-burnt-50 text-burnt">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-semibold text-charcoal">
+                    {user.name}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="text-sm font-semibold text-gray-600 hover:text-charcoal"
+                >
+                  Logout
+                </button>
+              </div>
             ) : (
-              <div className="flex flex-col gap-3 mt-2 border-t border-[#1A1A1A] pt-4">
+              <div className="mt-2 grid grid-cols-2 gap-2">
                 <Link
                   to="/login"
-                  className="py-2 px-4 font-bold uppercase tracking-widest text-center hover:bg-[#1A1A1A] hover:text-[#39FF14] border border-transparent hover:border-[#1A1A1A] transition-all"
+                  className="rounded-full border border-gray-200 px-4 py-3 text-center text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 hover:text-charcoal"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Login
                 </Link>
                 <Link
                   to="/signup"
-                  className="py-3 px-4 bg-[#1A1A1A] text-[#39FF14] font-bold uppercase tracking-widest text-center border-2 border-[#1A1A1A] hover:bg-[#39FF14] hover:text-[#1A1A1A] transition-all"
+                  className="rounded-full bg-burnt px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-burnt-600"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Sign Up
+                  Sign up
                 </Link>
               </div>
             )}

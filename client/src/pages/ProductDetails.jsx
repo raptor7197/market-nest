@@ -1,19 +1,26 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { productApi } from "../api/productApi";
+import { useCart } from "../context/CartContext";
+import { useAuth } from "../context/AuthContext";
 import {
   ArrowLeft,
+  CheckCircle2,
+  RotateCcw,
+  ShieldCheck,
   ShoppingBag,
   Zap,
-  ShieldCheck,
-  RotateCcw,
 } from "lucide-react";
 
 const ProductDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { addItem } = useCart();
+  const { user } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [addedMessage, setAddedMessage] = useState("");
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -31,10 +38,10 @@ const ProductDetails = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#E3E1DC] flex flex-col items-center justify-center font-mono">
-        <div className="w-16 h-16 border-4 border-[#1A1A1A] border-t-[#39FF14] rounded-full animate-spin"></div>
-        <p className="mt-6 font-bold uppercase tracking-widest animate-pulse">
-          Loading_Data...
+      <div className="flex min-h-screen flex-col items-center justify-center bg-offwhite">
+        <div className="spinner h-12 w-12" />
+        <p className="mt-5 text-sm font-semibold text-gray-500">
+          Loading product
         </p>
       </div>
     );
@@ -42,83 +49,78 @@ const ProductDetails = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-[#E3E1DC] flex flex-col items-center justify-center font-mono">
-        <h2 className="text-4xl font-black uppercase mb-4">
-          Product Not Found
+      <div className="flex min-h-screen flex-col items-center justify-center bg-offwhite px-4 text-center">
+        <h2 className="text-4xl font-extrabold tracking-tight text-charcoal">
+          Product not found
         </h2>
         <Link
           to="/products"
-          className="px-8 py-3 bg-[#1A1A1A] text-[#39FF14] font-bold uppercase hover:bg-[#39FF14] hover:text-[#1A1A1A] transition-colors"
+          className="mt-6 rounded-full bg-burnt px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(201,79,36,0.24)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600"
         >
-          Return to Base
+          Return to marketplace
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#E3E1DC] text-[#1A1A1A] font-mono selection:bg-[#39FF14] selection:text-black pb-20">
-      {/* Header / Breadcrumb */}
-      <div className="border-b-2 border-[#1A1A1A] bg-[#E3E1DC] sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">
+    <div className="min-h-screen bg-offwhite pb-20 text-charcoal">
+      <div className="border-b border-gray-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <Link
             to="/products"
-            className="flex items-center gap-2 font-bold uppercase tracking-widest hover:text-[#C94F24] transition-colors text-xs md:text-sm"
+            className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-charcoal"
           >
-            <ArrowLeft className="w-4 h-4" />
-            Back_To_Market
+            <ArrowLeft className="h-4 w-4" />
+            Marketplace
           </Link>
-          <span className="text-[#1A1A1A]/40">/</span>
-          <span className="text-xs md:text-sm uppercase truncate font-bold opacity-60">
+          <span className="text-gray-300">/</span>
+          <span className="truncate text-sm font-medium text-gray-500">
             {product.name}
           </span>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Left Column: Images */}
-          <div className="space-y-6">
-            <div className="relative aspect-square border-2 border-[#1A1A1A] bg-white p-2 shadow-[8px_8px_0px_0px_#1A1A1A]">
-              {/* Sticker overlay */}
-              <div className="absolute top-4 right-4 z-10 bg-[#39FF14] px-3 py-1 border border-[#1A1A1A] -rotate-2">
-                <span className="text-xs font-black uppercase">
-                  {product.category}
-                </span>
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-14">
+          <div className="space-y-5">
+            <div className="relative overflow-hidden rounded-[2rem] border border-gray-200 bg-white p-3 shadow-soft">
+              <div className="absolute right-6 top-6 z-10 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold capitalize text-charcoal shadow-sm backdrop-blur">
+                {product.category}
               </div>
-
-              {product.images && product.images.length > 0 ? (
-                <img
-                  src={product.images[selectedImage]}
-                  alt={product.name}
-                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500 cursor-crosshair"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-[#E3E1DC]">
-                  <span className="font-bold uppercase opacity-40">
-                    [No_Image_Data]
-                  </span>
-                </div>
-              )}
+              <div className="aspect-square overflow-hidden rounded-[1.5rem] bg-gray-100">
+                {product.images && product.images.length > 0 ? (
+                  <img
+                    src={product.images[selectedImage]}
+                    alt={product.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center">
+                    <span className="text-sm font-semibold text-gray-400">
+                      No image available
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Thumbnails */}
             {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-4 gap-3">
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`aspect-square border-2 ${
+                    className={`aspect-square overflow-hidden rounded-2xl border bg-white p-1 transition-all ${
                       selectedImage === idx
-                        ? "border-[#39FF14] shadow-[4px_4px_0px_0px_#1A1A1A]"
-                        : "border-[#1A1A1A] opacity-60 hover:opacity-100"
-                    } transition-all p-1 bg-white`}
+                        ? "border-burnt shadow-[0_12px_26px_rgba(201,79,36,0.18)]"
+                        : "border-gray-200 opacity-70 hover:opacity-100"
+                    }`}
                   >
                     <img
                       src={img}
                       alt={`View ${idx + 1}`}
-                      className="w-full h-full object-cover"
+                      className="h-full w-full rounded-xl object-cover"
                     />
                   </button>
                 ))}
@@ -126,68 +128,98 @@ const ProductDetails = () => {
             )}
           </div>
 
-          {/* Right Column: Info */}
-          <div className="flex flex-col h-full">
-            <div className="border-b-2 border-[#1A1A1A] pb-6 mb-6">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="px-3 py-1 bg-[#1A1A1A] text-[#E3E1DC] text-xs font-bold uppercase tracking-widest">
-                  Brand: {product.brand?.name || "Unknown"}
+          <div className="flex flex-col">
+            <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-card sm:p-8">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="rounded-full bg-burnt-50 px-3 py-1 text-xs font-semibold text-burnt">
+                  {product.brand?.name || "Unknown brand"}
                 </div>
-                <div className="flex items-center gap-2 text-xs font-bold uppercase text-[#1A1A1A]">
-                  <span className="w-2 h-2 bg-[#39FF14] rounded-full animate-pulse"></span>
-                  Marketplace Ready
+                <div className="flex items-center gap-2 text-xs font-semibold text-[#16807a]">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Marketplace ready
                 </div>
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-black uppercase leading-none tracking-tighter mb-6 text-[#1A1A1A]">
+              <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-charcoal sm:text-5xl">
                 {product.name}
               </h1>
 
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-bold tracking-tighter">
-                  ${product.price.toFixed(2)}
+              <div className="mt-6 flex items-end gap-2">
+                <span className="text-4xl font-extrabold tracking-tight text-charcoal">
+                  ₹{product.price.toFixed(2)}
                 </span>
-                <span className="text-sm opacity-60 uppercase">USD / Unit</span>
+                <span className="pb-1 text-sm font-medium text-gray-500">
+                  ₹ INR
+                </span>
               </div>
-            </div>
 
-            <div className="space-y-8 flex-grow">
-              <div>
-                <h3 className="text-sm font-bold uppercase mb-2 border-l-4 border-[#39FF14] pl-2">
-                  Specs_&_Details
-                </h3>
-                <p className="text-sm leading-relaxed opacity-80 whitespace-pre-line border-2 border-[#1A1A1A] p-4 bg-white/50">
+              <div className="mt-8">
+                <h2 className="text-sm font-bold text-charcoal">
+                  Product details
+                </h2>
+                <p className="mt-3 whitespace-pre-line rounded-3xl bg-gray-50 p-5 text-sm leading-7 text-gray-600">
                   {product.description || "No description available."}
                 </p>
               </div>
 
-              {/* Guarantees */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="border border-[#1A1A1A] p-4 flex flex-col items-center text-center gap-2 hover:bg-[#1A1A1A] hover:text-[#39FF14] transition-colors group">
-                  <ShieldCheck className="w-6 h-6" />
-                  <span className="text-xs font-bold uppercase">
-                    Auth_Verified
+              <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4">
+                  <div className="rounded-full bg-[#e7f5f2] p-2 text-[#16807a]">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <span className="text-sm font-semibold text-charcoal">
+                    Auth verified
                   </span>
                 </div>
-                <div className="border border-[#1A1A1A] p-4 flex flex-col items-center text-center gap-2 hover:bg-[#1A1A1A] hover:text-[#39FF14] transition-colors group">
-                  <RotateCcw className="w-6 h-6" />
-                  <span className="text-xs font-bold uppercase">
-                    30_Day_Return
+                <div className="flex items-center gap-3 rounded-2xl border border-gray-200 bg-white p-4">
+                  <div className="rounded-full bg-burnt-50 p-2 text-burnt">
+                    <RotateCcw className="h-5 w-5" />
+                  </div>
+                  <span className="text-sm font-semibold text-charcoal">
+                    30 day return
                   </span>
                 </div>
               </div>
-            </div>
 
-            {/* Actions */}
-            <div className="mt-8 flex flex-col sm:flex-row gap-4">
-              <button className="flex-1 py-4 bg-[#E3E1DC] border-2 border-[#1A1A1A] text-[#1A1A1A] font-bold uppercase tracking-widest hover:bg-[#1A1A1A] hover:text-[#E3E1DC] transition-all flex items-center justify-center gap-2 group">
-                <ShoppingBag className="w-5 h-5 group-hover:text-[#39FF14] transition-colors" />
-                Add to Cart
-              </button>
-              <button className="flex-1 py-4 bg-[#39FF14] border-2 border-[#1A1A1A] text-[#1A1A1A] font-black uppercase tracking-widest shadow-[4px_4px_0px_0px_#1A1A1A] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all flex items-center justify-center gap-2">
-                <Zap className="w-5 h-5 fill-current" />
-                Buy Now
-              </button>
+              <div className="mt-8">
+                {user?.role === "brand" ? (
+                  <p className="rounded-2xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm font-medium text-gray-500">
+                    You are signed in as a brand. Switch to a customer account to
+                    place orders.
+                  </p>
+                ) : (
+                  <>
+                    {addedMessage && (
+                      <p className="mb-3 rounded-2xl bg-[#e7f5f2] px-4 py-3 text-sm font-semibold text-[#16807a]">
+                        {addedMessage}
+                      </p>
+                    )}
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <button
+                        onClick={() => {
+                          addItem(product, 1);
+                          setAddedMessage("Added to cart!");
+                          setTimeout(() => setAddedMessage(""), 2500);
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-charcoal shadow-sm transition-all hover:-translate-y-0.5 hover:border-burnt/30"
+                      >
+                        <ShoppingBag className="h-5 w-5" />
+                        Add to cart
+                      </button>
+                      <button
+                        onClick={() => {
+                          addItem(product, 1);
+                          navigate("/checkout");
+                        }}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-burnt px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(201,79,36,0.25)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600"
+                      >
+                        <Zap className="h-5 w-5" />
+                        Buy now
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -1,63 +1,53 @@
 import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 
 const ProductCard = ({ product }) => {
   return (
     <Link
       to={`/products/${product._id}`}
-      className="block h-full border-2 border-[#1A1A1A] bg-white transition-all duration-200 hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[4px_4px_0px_0px_#1A1A1A] group relative"
+      className="group block h-full overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-card transition-all duration-300 hover:-translate-y-1 hover:border-burnt/30 hover:shadow-soft"
     >
-      {/* Brand Badge */}
-      <div className="absolute top-2 left-2 z-10">
-        <span className="bg-[#39FF14] text-[#1A1A1A] px-2 py-1 text-xs font-bold uppercase border border-[#1A1A1A]">
-          {product.brand?.name || "Unknown"}
-        </span>
-      </div>
-
-      {/* Image Container */}
-      <div className="aspect-square bg-[#E3E1DC] relative overflow-hidden border-b-2 border-[#1A1A1A]">
+      <div className="relative aspect-square overflow-hidden bg-gray-100">
         {product.images && product.images.length > 0 ? (
           <img
             src={product.images[0]}
             alt={product.name}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 grayscale group-hover:grayscale-0"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="font-mono text-xs text-[#1A1A1A]/40 uppercase tracking-widest">
-              [No_Signal]
+          <div className="flex h-full w-full items-center justify-center">
+            <span className="text-xs font-semibold text-gray-400">
+              No image
             </span>
           </div>
         )}
 
-        {/* Category Tag */}
-        <div className="absolute bottom-0 right-0 border-t-2 border-l-2 border-[#1A1A1A] bg-white px-3 py-1">
-          <span className="text-xs font-bold uppercase tracking-widest">
-            {product.category}
-          </span>
+        <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-charcoal shadow-sm backdrop-blur">
+          {product.brand?.name || "Unknown"}
+        </div>
+        <div className="absolute bottom-3 right-3 rounded-full bg-charcoal/90 px-3 py-1 text-xs font-semibold capitalize text-white backdrop-blur">
+          {product.category}
         </div>
       </div>
 
-      {/* Content */}
-      <div className="p-4 flex flex-col gap-2">
-        <h3 className="font-bold text-lg leading-tight uppercase truncate group-hover:text-[#C94F24] transition-colors">
-          {product.name}
-        </h3>
-
-        <div className="flex items-end justify-between mt-2">
-          <div className="flex flex-col">
-            <span className="text-[10px] font-mono opacity-60 uppercase">
-              Price_Unit
-            </span>
-            <span className="text-xl font-black tracking-tighter">
-              ${product.price.toFixed(2)}
-            </span>
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="truncate text-lg font-bold leading-tight text-charcoal transition-colors group-hover:text-burnt">
+            {product.name}
+          </h3>
+          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-burnt-50 text-burnt transition-colors group-hover:bg-burnt group-hover:text-white">
+            <ArrowUpRight className="h-4 w-4" />
           </div>
+        </div>
 
-          <div className="w-8 h-8 bg-[#1A1A1A] flex items-center justify-center group-hover:bg-[#39FF14] transition-colors">
-            <span className="text-white group-hover:text-[#1A1A1A] text-xl font-light">
-              +
-            </span>
+        <div className="mt-4 flex items-end justify-between">
+          <div>
+            <p className="text-xs font-medium text-gray-500">Starting at</p>
+            <p className="text-xl font-extrabold tracking-tight text-charcoal">
+              ₹{product.price.toFixed(2)}
+            </p>
           </div>
+          <span className="h-2 w-2 rounded-full bg-[#16807a]" />
         </div>
       </div>
     </Link>

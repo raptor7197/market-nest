@@ -31,15 +31,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { data } = await authApi.login({ email, password });
-    localStorage.setItem('accessToken', data.data.accessToken);
-    setUser(data.data.user);
+    localStorage.setItem('accessToken', data.accessToken);
+    setUser(data.user);
     return data;
   };
 
   const signup = async (email, password, name, role) => {
     const { data } = await authApi.signup({ email, password, name, role });
-    localStorage.setItem('accessToken', data.data.accessToken);
-    setUser(data.data.user);
+    localStorage.setItem('accessToken', data.accessToken);
+    setUser(data.user);
     return data;
   };
 

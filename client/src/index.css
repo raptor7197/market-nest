@@ -4,6 +4,19 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-ink: #171717;
+  --color-muted: #667085;
+  --color-line: #e4e7ec;
+  --color-soft: #f6f7f9;
+  --color-panel: #ffffff;
+  --color-accent: #c94f24;
+  --color-accent-dark: #a33f1d;
+  --color-teal: #16807a;
+  --shadow-soft: 0 20px 60px rgba(23, 23, 23, 0.08);
+  --shadow-card: 0 14px 38px rgba(23, 23, 23, 0.08);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -18,12 +31,12 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #F2F2F2;
-  color: #1A1A1A;
+  background-color: #F6F7F9;
+  color: #171717;
 }
 
 .spinner {
-  border: 3px solid #f3f3f3;
+  border: 3px solid #f2f4f7;
   border-top: 3px solid #C94F24;
   border-radius: 50%;
   width: 24px;
@@ -37,13 +50,19 @@ body {
 }
 
 @layer utilities {
-  .text-charcoal { color: #1A1A1A; }
+  .text-charcoal { color: #171717; }
   .text-burnt { color: #C94F24; }
-  .text-slate { color: #7A8CA5; }
+  .text-slate { color: #667085; }
   .bg-burnt { background-color: #C94F24; }
-  .bg-charcoal { background-color: #1A1A1A; }
-  .bg-slate { background-color: #7A8CA5; }
-  .bg-offwhite { background-color: #F2F2F2; }
+  .bg-charcoal { background-color: #171717; }
+  .bg-slate { background-color: #667085; }
+  .bg-offwhite { background-color: #F6F7F9; }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .focus-ring {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
   
   .animate-delay-100 { animation-delay: 100ms; }
   .animate-delay-200 { animation-delay: 200ms; }
@@ -54,18 +73,30 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F2F2F2;
+  background: #F6F7F9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #7A8CA5;
-  border-radius: 4px;
+  background: #C9D0DA;
+  border-radius: 999px;
+  border: 2px solid #F6F7F9;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #C94F24;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

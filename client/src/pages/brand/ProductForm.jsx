@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { productApi } from '../../api/productApi';
-import Input from '../../components/common/Input';
-import Button from '../../components/common/Button';
-import Spinner from '../../components/common/Spinner';
-import { ArrowLeft, Upload, X } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import { productApi } from "../../api/productApi";
+import Input from "../../components/common/Input";
+import Button from "../../components/common/Button";
+import Spinner from "../../components/common/Spinner";
+import { ArrowLeft, ImagePlus, Upload, X } from "lucide-react";
 
-const CATEGORIES = ['clothing', 'shoes', 'accessories', 'bags', 'jewelry'];
-const STATUSES = ['draft', 'published'];
+const CATEGORIES = ["clothing", "shoes", "accessories", "bags", "jewelry"];
+const STATUSES = ["draft", "published"];
 
 const ProductForm = () => {
   const { id } = useParams();
@@ -17,15 +17,15 @@ const ProductForm = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEdit);
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    category: 'clothing',
+    name: "",
+    description: "",
+    price: "",
+    category: "clothing",
     images: [],
-    status: 'draft',
+    status: "draft",
   });
 
   useEffect(() => {
@@ -36,14 +36,14 @@ const ProductForm = () => {
           const product = response.data.product;
           setFormData({
             name: product.name,
-            description: product.description || '',
+            description: product.description || "",
             price: product.price.toString(),
             category: product.category,
             images: product.images || [],
             status: product.status,
           });
         } catch (err) {
-          setError('Failed to fetch product');
+          setError("Failed to fetch product");
         } finally {
           setFetching(false);
         }
@@ -62,16 +62,16 @@ const ProductForm = () => {
     if (files.length === 0) return;
 
     if (formData.images.length + files.length > 5) {
-      setError('Maximum 5 images allowed');
+      setError("Maximum 5 images allowed");
       return;
     }
 
     setUploading(true);
-    setError('');
+    setError("");
 
     try {
       const formDataUpload = new FormData();
-      files.forEach((file) => formDataUpload.append('images', file));
+      files.forEach((file) => formDataUpload.append("images", file));
 
       const response = await productApi.uploadImages(formDataUpload);
       const newImages = response.data.images;
@@ -80,7 +80,7 @@ const ProductForm = () => {
         images: [...prev.images, ...newImages],
       }));
     } catch (err) {
-      setError('Failed to upload images');
+      setError("Failed to upload images");
     } finally {
       setUploading(false);
     }
@@ -95,7 +95,7 @@ const ProductForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
@@ -110,9 +110,9 @@ const ProductForm = () => {
         await productApi.createProduct(data);
       }
 
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to save product');
+      setError(err.response?.data?.message || "Failed to save product");
     } finally {
       setLoading(false);
     }
@@ -120,161 +120,196 @@ const ProductForm = () => {
 
   if (fetching) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center bg-offwhite">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <Link
-        to="/dashboard"
-        className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        Back to Dashboard
-      </Link>
+    <div className="min-h-screen bg-offwhite">
+      <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+        <Link
+          to="/dashboard"
+          className="mb-6 inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold text-gray-600 transition-colors hover:bg-white hover:text-charcoal"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to dashboard
+        </Link>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">
-        {isEdit ? 'Edit Product' : 'Create Product'}
-      </h1>
-
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Input
-          label="Product Name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="Enter product name"
-          required
-        />
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Description
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={4}
-            placeholder="Enter product description"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
+        <div className="mb-8">
+          <h1 className="text-4xl font-extrabold tracking-tight text-charcoal">
+            {isEdit ? "Edit product" : "Create product"}
+          </h1>
+          <p className="mt-2 text-base text-gray-600">
+            Keep product information clear, image-led, and ready for the
+            marketplace.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Input
-            label="Price"
-            name="price"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.price}
-            onChange={handleChange}
-            placeholder="0.00"
-            required
-          />
+        {error && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">
+            {error}
+          </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category
-            </label>
-            <select
-              name="category"
-              value={formData.category}
+        <form
+          onSubmit={handleSubmit}
+          className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]"
+        >
+          <div className="space-y-6 rounded-[2rem] border border-gray-200 bg-white p-6 shadow-card sm:p-8">
+            <Input
+              label="Product name"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+              placeholder="Enter product name"
+              required
+            />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-          <div className="flex gap-4">
-            {STATUSES.map((status) => (
-              <label key={status} className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="status"
-                  value={status}
-                  checked={formData.status === status}
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-charcoal">
+                Description
+              </label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={5}
+                placeholder="Enter product description"
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-charcoal shadow-sm outline-none transition-all placeholder:text-gray-400 focus:border-burnt focus:ring-4 focus:ring-burnt/10"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input
+                label="Price"
+                name="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.price}
+                onChange={handleChange}
+                placeholder="0.00"
+                required
+              />
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-charcoal">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
                   onChange={handleChange}
-                  className="text-primary-600 focus:ring-primary-500"
-                />
-                <span className="capitalize">{status}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Images (max 5)
-          </label>
-          <div className="flex flex-wrap gap-3 mb-3">
-            {formData.images.map((img, idx) => (
-              <div key={idx} className="relative w-20 h-20">
-                <img
-                  src={img}
-                  alt=""
-                  className="w-full h-full object-cover rounded-lg"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImage(idx)}
-                  className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-charcoal shadow-sm outline-none transition-all focus:border-burnt focus:ring-4 focus:ring-burnt/10"
                 >
-                  <X className="h-3 w-3" />
-                </button>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </option>
+                  ))}
+                </select>
               </div>
-            ))}
-            
-            {formData.images.length < 5 && (
-              <label className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center cursor-pointer hover:border-primary-500 transition-colors">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={uploading}
-                />
-                {uploading ? (
-                  <Spinner size="sm" />
-                ) : (
-                  <Upload className="h-6 w-6 text-gray-400" />
-                )}
-              </label>
-            )}
-          </div>
-        </div>
+            </div>
 
-        <div className="flex gap-4">
-          <Button type="submit" loading={loading}>
-            {isEdit ? 'Update Product' : 'Create Product'}
-          </Button>
-          <Link
-            to="/dashboard"
-            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </Link>
-        </div>
-      </form>
+            <div>
+              <label className="mb-3 block text-sm font-semibold text-charcoal">
+                Status
+              </label>
+              <div className="flex flex-wrap gap-3">
+                {STATUSES.map((status) => (
+                  <label
+                    key={status}
+                    className={`flex cursor-pointer items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold capitalize transition-colors ${
+                      formData.status === status
+                        ? "border-charcoal bg-charcoal text-white"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-burnt/30"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="status"
+                      value={status}
+                      checked={formData.status === status}
+                      onChange={handleChange}
+                      className="sr-only"
+                    />
+                    {status}
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-card">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-extrabold text-charcoal">
+                    Images
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">Maximum 5 images</p>
+                </div>
+                <div className="rounded-2xl bg-burnt-50 p-3 text-burnt">
+                  <ImagePlus className="h-6 w-6" />
+                </div>
+              </div>
+
+              <div className="mt-5 grid grid-cols-3 gap-3">
+                {formData.images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="relative aspect-square overflow-hidden rounded-2xl bg-gray-100"
+                  >
+                    <img
+                      src={img}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(idx)}
+                      className="absolute right-2 top-2 rounded-full bg-white p-1.5 text-red-600 shadow-sm transition-colors hover:bg-red-50"
+                      aria-label="Remove image"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+
+                {formData.images.length < 5 && (
+                  <label className="flex aspect-square cursor-pointer items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 text-gray-400 transition-colors hover:border-burnt/50 hover:text-burnt">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="hidden"
+                      disabled={uploading}
+                    />
+                    {uploading ? <Spinner size="sm" /> : <Upload className="h-6 w-6" />}
+                  </label>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[2rem] border border-gray-200 bg-white p-6 shadow-card">
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <Button type="submit" loading={loading} className="w-full">
+                  {isEdit ? "Update product" : "Create product"}
+                </Button>
+                <Link
+                  to="/dashboard"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-all hover:-translate-y-0.5 hover:border-burnt/30 hover:text-burnt"
+                >
+                  Cancel
+                </Link>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

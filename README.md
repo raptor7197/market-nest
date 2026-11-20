@@ -180,7 +180,3 @@ This creates a brand account and published placeholder products for marketplace 
 
 - Email: `seed.brand@marketnest.demo`
 - Password: `SeedBrand123!`
-
-## AI Usage
-
-AI assistance was used for code drafting, refactoring, and documentation. Final integration, debugging, and project-specific adjustments were applied within the repository codebase.

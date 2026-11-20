@@ -7,7 +7,7 @@ import Spinner from "../../components/common/Spinner";
 import { ArrowLeft, ImagePlus, Upload, X } from "lucide-react";
 
 const CATEGORIES = ["clothing", "shoes", "accessories", "bags", "jewelry"];
-const STATUSES = ["draft", "published"];
+const STATUSES = ["draft", "published", "archived"];
 
 const ProductForm = () => {
   const { id } = useParams();
@@ -23,6 +23,7 @@ const ProductForm = () => {
     name: "",
     description: "",
     price: "",
+    stock: "0",
     category: "clothing",
     images: [],
     status: "draft",
@@ -38,6 +39,7 @@ const ProductForm = () => {
             name: product.name,
             description: product.description || "",
             price: product.price.toString(),
+            stock: (product.stock ?? 0).toString(),
             category: product.category,
             images: product.images || [],
             status: product.status,
@@ -102,6 +104,7 @@ const ProductForm = () => {
       const data = {
         ...formData,
         price: parseFloat(formData.price),
+        stock: parseInt(formData.stock || "0", 10),
       };
 
       if (isEdit) {
@@ -194,23 +197,35 @@ const ProductForm = () => {
                 required
               />
 
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-charcoal">
-                  Category
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-charcoal shadow-sm outline-none transition-all focus:border-burnt focus:ring-4 focus:ring-burnt/10"
-                >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Input
+                label="Stock"
+                name="stock"
+                type="number"
+                step="1"
+                min="0"
+                value={formData.stock}
+                onChange={handleChange}
+                placeholder="0"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-charcoal">
+                Category
+              </label>
+              <select
+                name="category"
+                value={formData.category}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-charcoal shadow-sm outline-none transition-all focus:border-burnt focus:ring-4 focus:ring-burnt/10"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

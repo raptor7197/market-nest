@@ -45,6 +45,16 @@ const productSchema = new mongoose.Schema(
       default: 'draft',
       index: true,
     },
+    stock: {
+      type: Number,
+      required: [true, 'Stock is required'],
+      default: 0,
+      min: [0, 'Stock cannot be negative'],
+      validate: {
+        validator: Number.isInteger,
+        message: 'Stock must be a whole number',
+      },
+    },
   },
   {
     timestamps: true,

@@ -3,11 +3,26 @@ export const TOKEN_EXPIRY = {
   REFRESH: '7d',
 };
 
+// Cross-site cookies (https client / ngrok) need SameSite=None + Secure.
+const isCrossSite =
+  (process.env.CLIENT_URL || '').startsWith('https://') ||
+  process.env.NODE_ENV === 'production';
+
 export const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  secure: isCrossSite,
+  sameSite: isCrossSite ? 'none' : 'lax',
+  path: '/',
   maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
+// clearCookie must NOT carry maxAge/expires, otherwise the browser keeps a
+// future-dated empty cookie.
+export const CLEAR_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: isCrossSite,
+  sameSite: isCrossSite ? 'none' : 'lax',
+  path: '/',
 };
 
 export const CATEGORIES = ['clothing', 'shoes', 'accessories', 'bags', 'jewelry'];

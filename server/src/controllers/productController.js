@@ -20,10 +20,15 @@ export const createProduct = async (req, res, next) => {
   }
 };
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export const getProducts = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit) || PAGINATION.DEFAULT_LIMIT;
+    const page = Math.max(parseInt(req.query.page, 10) || PAGINATION.DEFAULT_PAGE, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || PAGINATION.DEFAULT_LIMIT, 1),
+      50
+    );
     const skip = (page - 1) * limit;
 
     const query = { status: 'published' };
@@ -32,15 +37,15 @@ export const getProducts = async (req, res, next) => {
       query.category = req.query.category;
     }
 
-    if (req.query.search) {
+    if (req.query.search && typeof req.query.search === 'string') {
       query.$or = [
-        { name: { $regex: req.query.search, $options: 'i' } },
+        { name: { $regex: escapeRegex(req.query.search), $options: 'i' } },
       ];
     }
 
     const [products, total] = await Promise.all([
       Product.find(query)
-        .populate('brand', 'name email')
+        .populate('brand', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -68,10 +73,21 @@ export const getProducts = async (req, res, next) => {
 
 export const getProductById = async (req, res, next) => {
   try {
-    const product = await Product.findById(req.params.id).populate('brand', 'name email');
+    const product = await Product.findById(req.params.id).populate('brand', 'name');
 
     if (!product) {
       throw ApiError.notFound('Product not found');
+    }
+
+    // Unpublished products are only visible to their owning brand.
+    if (product.status !== 'published') {
+      const isOwner =
+        req.user &&
+        req.user.role === 'brand' &&
+        String(product.brand?._id ?? product.brand) === String(req.user._id);
+      if (!isOwner) {
+        throw ApiError.notFound('Product not found');
+      }
     }
 
     res.json({
@@ -159,8 +175,11 @@ export const getBrandDashboard = async (req, res, next) => {
 export const getBrandProducts = async (req, res, next) => {
   try {
     const brandId = req.user._id;
-    const page = parseInt(req.query.page) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit) || PAGINATION.DEFAULT_LIMIT;
+    const page = Math.max(parseInt(req.query.page, 10) || PAGINATION.DEFAULT_PAGE, 1);
+    const limit = Math.min(
+      Math.max(parseInt(req.query.limit, 10) || PAGINATION.DEFAULT_LIMIT, 1),
+      50
+    );
     const skip = (page - 1) * limit;
     const status = req.query.status;
 

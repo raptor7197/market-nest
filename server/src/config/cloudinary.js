@@ -25,7 +25,11 @@ const upload = multer({
     if (allowedTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only jpg, jpeg, png, and webp are allowed.'), false);
+      const error = new Error(
+        'Invalid file type. Only jpg, jpeg, png, and webp are allowed.'
+      );
+      error.statusCode = 400;
+      cb(error, false);
     }
   },
 });

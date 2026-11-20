@@ -2,14 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import { errorHandler, notFound } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
-
-dotenv.config();
 
 const app = express();
 
@@ -19,17 +17,30 @@ app.use(helmet({
 
 const allowedOrigins = [
   process.env.CLIENT_URL || 'http://localhost:5173',
-  /https?:\/\/.*\.ngrok\.io/,
-  /https?:\/\/.*\.ngrok-free\.app/,
 ];
+
+// Match tunnel hosts by hostname suffix only, so origins like
+// "https://evil.com.ngrok.io.attacker.com" are rejected.
+const allowedHostSuffixes = ['.ngrok.io', '.ngrok-free.app'];
+
+const isAllowedOrigin = (origin) => {
+  if (allowedOrigins.includes(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return (
+      url.protocol === 'https:' &&
+      allowedHostSuffixes.some((suffix) => url.hostname.endsWith(suffix))
+    );
+  } catch {
+    return false;
+  }
+};
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.some(o => (typeof o === 'string' ? o === origin : o.test(origin)))) {
-      callback(null, true);
-    } else {
-      callback(null, true);
-    }
+    // Allow same-origin/server-to-server requests (no Origin header).
+    if (!origin) return callback(null, true);
+    return callback(null, isAllowedOrigin(origin));
   },
   credentials: true,
 }));

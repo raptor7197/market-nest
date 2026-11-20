@@ -10,10 +10,11 @@ import {
 } from '../controllers/orderController.js';
 import { authenticate } from '../middleware/auth.js';
 import { requireRole } from '../middleware/role.js';
-import { validate } from '../middleware/validate.js';
+import { validate, validateQuery } from '../middleware/validate.js';
 import {
   createOrderSchema,
   updateOrderStatusSchema,
+  orderQuerySchema,
 } from '../validators/orderValidator.js';
 
 const router = express.Router();
@@ -21,8 +22,20 @@ const router = express.Router();
 // Static paths before the dynamic /:id route.
 router.post('/', authenticate, requireRole('customer'), validate(createOrderSchema), createOrder);
 
-router.get('/my', authenticate, requireRole('customer'), getMyOrders);
-router.get('/brand', authenticate, requireRole('brand'), getBrandOrders);
+router.get(
+  '/my',
+  authenticate,
+  requireRole('customer'),
+  validateQuery(orderQuerySchema),
+  getMyOrders
+);
+router.get(
+  '/brand',
+  authenticate,
+  requireRole('brand'),
+  validateQuery(orderQuerySchema),
+  getBrandOrders
+);
 router.get('/brand/stats', authenticate, requireRole('brand'), getBrandOrderStats);
 
 router.patch(

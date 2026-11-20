@@ -4,30 +4,90 @@ import Product from '../models/Product.js';
 import ApiError from '../utils/ApiError.js';
 import { PAGINATION, ORDER_STATUS_TRANSITIONS } from '../utils/constants.js';
 
+const roundMoney = (value) => Math.round(value * 100) / 100;
+
 const buildPagination = (page, limit, total) => ({
   currentPage: page,
-  totalPages: Math.ceil(total / limit),
+  totalPages: Math.max(Math.ceil(total / limit), 1),
   totalItems: total,
   itemsPerPage: limit,
   hasNextPage: page * limit < total,
   hasPrevPage: page > 1,
 });
 
+const brandIdOf = (item) => String(item.brand?._id ?? item.brand);
+
 const isBrandParticipant = (order, userId) =>
-  order.items.some((item) => item.brand.toString() === userId.toString());
+  order.items.some((item) => brandIdOf(item) === String(userId));
+
+// Return reserved units to inventory in one round-trip.
+const restoreStock = async (items) => {
+  if (!items?.length) return;
+  await Product.bulkWrite(
+    items.map((item) => ({
+      updateOne: {
+        filter: { _id: item.product },
+        update: { $inc: { stock: item.quantity } },
+      },
+    }))
+  );
+};
+
+const populateOrder = (id) =>
+  Order.findById(id)
+    .populate('customer', 'name email')
+    .populate('brand', 'name')
+    .populate('items.brand', 'name');
+
+// Strip other brands' line items from a payload.
+const scopeItems = (order, userId) => {
+  const payload = order.toObject ? order.toObject() : { ...order };
+  payload.items = payload.items.filter(
+    (item) => brandIdOf(item) === String(userId)
+  );
+  payload.brandTotal = roundMoney(
+    payload.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  );
+  return payload;
+};
 
 export const createOrder = async (req, res, next) => {
   try {
     const { items, shippingAddress, paymentMethod } = req.body;
+    const idempotencyKey =
+      req.get('Idempotency-Key') || req.body.idempotencyKey || null;
 
-    // Merge duplicate product lines.
+    // Replay protection for retries/double submits.
+    if (idempotencyKey) {
+      const existing = await Order.find({
+        customer: req.user._id,
+        idempotencyKey,
+      })
+        .populate('customer', 'name email')
+        .populate('brand', 'name')
+        .populate('items.brand', 'name');
+
+      if (existing.length > 0) {
+        return res.status(200).json({
+          success: true,
+          data: {
+            orders: existing,
+            order: existing[0],
+            idempotentReplay: true,
+          },
+        });
+      }
+    }
+
+    // Merge duplicate product lines normalizing ids.
     const merged = new Map();
     for (const item of items) {
-      const existing = merged.get(item.product);
+      const key = item.product.toLowerCase();
+      const existing = merged.get(key);
       if (existing) {
         existing.quantity += item.quantity;
       } else {
-        merged.set(item.product, { product: item.product, quantity: item.quantity });
+        merged.set(key, { product: key, quantity: item.quantity });
       }
     }
 
@@ -38,13 +98,20 @@ export const createOrder = async (req, res, next) => {
       throw ApiError.badRequest('One or more products no longer exist');
     }
 
-    const productMap = new Map(products.map((p) => [p._id.toString(), p]));
+    const productMap = new Map(
+      products.map((p) => [p._id.toString().toLowerCase(), p])
+    );
 
-    const orderItems = [];
-    let totalAmount = 0;
+    // One group (→ order) per brand so brand-side changes never affect
+    // another brand's inventory.
+    const groups = new Map();
+    let totalQuantity = 0;
 
     for (const { product, quantity } of merged.values()) {
       const found = productMap.get(product);
+      if (!found) {
+        throw ApiError.badRequest('One or more products no longer exist');
+      }
       if (found.status !== 'published') {
         throw ApiError.badRequest(`Product "${found.name}" is not available`);
       }
@@ -52,7 +119,30 @@ export const createOrder = async (req, res, next) => {
         throw ApiError.badRequest('Quantity cannot exceed 99 per item');
       }
 
-      orderItems.push({
+      totalQuantity += quantity;
+      if (totalQuantity > 200) {
+        throw ApiError.badRequest('Order cannot exceed 200 total items');
+      }
+
+      const available = found.stock ?? 0;
+      if (available < quantity) {
+        throw ApiError.badRequest(
+          available === 0
+            ? `Product "${found.name}" is out of stock`
+            : `Only ${available} unit(s) of "${found.name}" left in stock`
+        );
+      }
+
+      const brandKey = String(found.brand);
+      if (!groups.has(brandKey)) {
+        groups.set(brandKey, {
+          brand: found.brand,
+          items: [],
+          total: 0,
+        });
+      }
+      const group = groups.get(brandKey);
+      group.items.push({
         product: found._id,
         brand: found.brand,
         name: found.name,
@@ -60,40 +150,111 @@ export const createOrder = async (req, res, next) => {
         price: found.price,
         quantity,
       });
-
-      totalAmount += found.price * quantity;
+      group.total = roundMoney(group.total + found.price * quantity);
     }
 
-    const order = await Order.create({
-      customer: req.user._id,
-      items: orderItems,
-      totalAmount,
-      shippingAddress,
-      paymentMethod: paymentMethod || 'cod',
-    });
+    const reserved = [];
+    const created = [];
+    try {
+      for (const group of groups.values()) {
+        for (const item of group.items) {
+          const updated = await Product.findOneAndUpdate(
+            {
+              _id: item.product,
+              status: 'published',
+              stock: { $gte: item.quantity },
+            },
+            { $inc: { stock: -item.quantity } },
+            { new: true }
+          );
 
-    const populated = await Order.findById(order._id).populate(
-      'customer',
-      'name email'
+          if (!updated) {
+            throw ApiError.conflict(
+              `"${item.name}" no longer has enough stock`
+            );
+          }
+          reserved.push(item);
+        }
+      }
+
+      for (const group of groups.values()) {
+        const order = await Order.create({
+          customer: req.user._id,
+          brand: group.brand,
+          items: group.items,
+          totalAmount: group.total,
+          shippingAddress,
+          paymentMethod: paymentMethod || 'cod',
+          idempotencyKey,
+          statusHistory: [
+            { status: 'pending', at: new Date(), changedBy: null },
+          ],
+        });
+        created.push(order);
+      }
+    } catch (error) {
+      try {
+        await restoreStock(reserved);
+      } catch (restoreError) {
+        console.error('Rollback restock failed:', restoreError.message);
+      }
+      if (created.length > 0) {
+        await Order.deleteMany({ _id: { $in: created.map((o) => o._id) } });
+      }
+
+      // A concurrent request won the idempotency race: return its orders.
+      if (error.code === 11000 && idempotencyKey) {
+        const existing = await Order.find({
+          customer: req.user._id,
+          idempotencyKey,
+        })
+          .populate('customer', 'name email')
+          .populate('brand', 'name')
+          .populate('items.brand', 'name');
+
+        if (existing.length > 0) {
+          return res.status(200).json({
+            success: true,
+            data: {
+              orders: existing,
+              order: existing[0],
+              idempotentReplay: true,
+            },
+          });
+        }
+      }
+      throw error;
+    }
+
+    const populated = await Promise.all(
+      created.map((order) => populateOrder(order._id))
     );
 
-    res.status(201).json({ success: true, data: { order: populated } });
+    res.status(201).json({
+      success: true,
+      data: { orders: populated, order: populated[0] },
+    });
   } catch (error) {
     next(error);
   }
 };
 
+const parsePaging = (query) => {
+  const page = Math.max(parseInt(query.page, 10) || PAGINATION.DEFAULT_PAGE, 1);
+  const limit = Math.min(Math.max(parseInt(query.limit, 10) || 10, 1), 50);
+  return { page, limit, skip: (page - 1) * limit };
+};
+
 export const getMyOrders = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page, 10) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePaging(req.query);
 
     const query = { customer: req.user._id };
     if (req.query.status) query.status = req.query.status;
 
     const [orders, total] = await Promise.all([
       Order.find(query)
+        .populate('brand', 'name')
         .populate('items.brand', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -112,9 +273,7 @@ export const getMyOrders = async (req, res, next) => {
 
 export const getBrandOrders = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page, 10) || PAGINATION.DEFAULT_PAGE;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePaging(req.query);
 
     const query = { 'items.brand': req.user._id };
     if (req.query.status) query.status = req.query.status;
@@ -122,24 +281,14 @@ export const getBrandOrders = async (req, res, next) => {
     const [orders, total] = await Promise.all([
       Order.find(query)
         .populate('customer', 'name email')
+        .populate('items.brand', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
       Order.countDocuments(query),
     ]);
 
-    // A brand should only see its own line items.
-    const scoped = orders.map((order) => {
-      const obj = order.toObject();
-      obj.items = obj.items.filter(
-        (item) => item.brand.toString() === req.user._id.toString()
-      );
-      obj.brandTotal = obj.items.reduce(
-        (sum, item) => sum + item.price * item.quantity,
-        0
-      );
-      return obj;
-    });
+    const scoped = orders.map((order) => scopeItems(order, req.user._id));
 
     res.json({
       success: true,
@@ -186,7 +335,7 @@ export const getBrandOrderStats = async (req, res, next) => {
       success: true,
       data: {
         totalOrders: result?.totalOrders?.[0]?.count || 0,
-        revenue: result?.revenue?.[0]?.total || 0,
+        revenue: roundMoney(result?.revenue?.[0]?.total || 0),
         byStatus,
       },
     });
@@ -197,13 +346,10 @@ export const getBrandOrderStats = async (req, res, next) => {
 
 export const getOrderById = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id)
-      .populate('customer', 'name email')
-      .populate('items.brand', 'name');
-
+    const order = await Order.findById(req.params.id);
     if (!order) throw ApiError.notFound('Order not found');
 
-    const isOwner = order.customer?._id?.toString() === req.user._id.toString();
+    const isOwner = String(order.customer) === String(req.user._id);
     const isBrand =
       req.user.role === 'brand' && isBrandParticipant(order, req.user._id);
 
@@ -211,12 +357,14 @@ export const getOrderById = async (req, res, next) => {
       throw ApiError.forbidden('You do not have permission to view this order');
     }
 
-    let payload = order.toObject();
-    if (isBrand && !isOwner) {
-      payload.items = payload.items.filter(
-        (item) => item.brand?._id?.toString() === req.user._id.toString()
-      );
-    }
+    await order.populate([
+      { path: 'customer', select: 'name email' },
+      { path: 'brand', select: 'name' },
+      { path: 'items.brand', select: 'name' },
+    ]);
+
+    const payload =
+      isBrand && !isOwner ? scopeItems(order, req.user._id) : order.toObject();
 
     res.json({ success: true, data: { order: payload } });
   } catch (error) {
@@ -235,22 +383,72 @@ export const updateOrderStatus = async (req, res, next) => {
       throw ApiError.forbidden('You do not have permission to update this order');
     }
 
-    const allowed = ORDER_STATUS_TRANSITIONS[order.status] || [];
-    if (!allowed.includes(status)) {
-      throw ApiError.badRequest(
-        `Cannot change status from "${order.status}" to "${status}"`
+    // Only single-brand orders are actionable; legacy mixed orders would let
+    // one brand change/restock another brand's inventory.
+    const distinctBrands = new Set(order.items.map(brandIdOf));
+    if (distinctBrands.size > 1) {
+      throw ApiError.conflict(
+        'Legacy multi-brand order cannot be modified by a single brand'
       );
     }
 
-    order.status = status;
-    await order.save();
+    const previousStatus = order.status;
+    const allowed = ORDER_STATUS_TRANSITIONS[previousStatus] || [];
+    if (!allowed.includes(status)) {
+      throw ApiError.badRequest(
+        `Cannot change status from "${previousStatus}" to "${status}"`
+      );
+    }
 
-    const populated = await Order.findById(order._id).populate(
-      'customer',
-      'name email'
-    );
+    const isCancelling = status === 'cancelled';
+    const update = {
+      $set: {
+        status,
+        ...(isCancelling ? { stockRestored: true } : {}),
+      },
+      $push: {
+        statusHistory: {
+          status,
+          at: new Date(),
+          changedBy: req.user._id,
+        },
+      },
+      ...(isCancelling ? { $unset: { idempotencyKey: 1 } } : {}),
+    };
 
-    res.json({ success: true, data: { order: populated } });
+    const filter = {
+      _id: order._id,
+      status: previousStatus,
+      ...(isCancelling ? { stockRestored: { $ne: true } } : {}),
+    };
+
+    const updated = await Order.findOneAndUpdate(filter, update, { new: true });
+    if (!updated) {
+      throw ApiError.conflict('Order status changed, please retry');
+    }
+
+    if (isCancelling) {
+      try {
+        await restoreStock(updated.items);
+      } catch (error) {
+        // Revert so the cancellation can be retried without losing stock.
+        await Order.updateOne(
+          { _id: updated._id, status: 'cancelled' },
+          {
+            $set: { status: previousStatus, stockRestored: false },
+            $pop: { statusHistory: 1 },
+          }
+        );
+        throw error;
+      }
+    }
+
+    const populated = await populateOrder(updated._id);
+
+    res.json({
+      success: true,
+      data: { order: scopeItems(populated, req.user._id) },
+    });
   } catch (error) {
     next(error);
   }
@@ -258,24 +456,123 @@ export const updateOrderStatus = async (req, res, next) => {
 
 export const cancelOrder = async (req, res, next) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) throw ApiError.notFound('Order not found');
-
-    if (order.customer.toString() !== req.user._id.toString()) {
+    const existing = await Order.findById(req.params.id);
+    if (!existing) throw ApiError.notFound('Order not found');
+    if (String(existing.customer) !== String(req.user._id)) {
       throw ApiError.forbidden('You can only cancel your own orders');
     }
 
-    if (!['pending', 'confirmed'].includes(order.status)) {
+    // Idempotent: cancelling an already-cancelled order is a no-op success.
+    if (existing.status === 'cancelled') {
+      const populated = await populateOrder(existing._id);
+      return res.json({
+        success: true,
+        data: { order: populated.toObject(), alreadyCancelled: true },
+      });
+    }
+
+    if (!['pending', 'confirmed'].includes(existing.status)) {
       throw ApiError.badRequest(
-        `Orders that are "${order.status}" cannot be cancelled`
+        `Orders that are "${existing.status}" cannot be cancelled`
       );
     }
 
-    order.status = 'cancelled';
-    await order.save();
+    const updated = await Order.findOneAndUpdate(
+      {
+        _id: existing._id,
+        customer: req.user._id,
+        status: existing.status,
+        stockRestored: { $ne: true },
+      },
+      {
+        $set: { status: 'cancelled', stockRestored: true },
+        $unset: { idempotencyKey: 1 },
+        $push: {
+          statusHistory: {
+            status: 'cancelled',
+            at: new Date(),
+            changedBy: req.user._id,
+          },
+        },
+      },
+      { new: true }
+    );
 
-    res.json({ success: true, data: { order } });
+    if (!updated) {
+      const latest = await Order.findById(existing._id);
+      if (latest?.status === 'cancelled') {
+        const populated = await populateOrder(latest._id);
+        return res.json({
+          success: true,
+          data: { order: populated.toObject(), alreadyCancelled: true },
+        });
+      }
+      throw ApiError.conflict('Order status changed, please retry');
+    }
+
+    try {
+      await restoreStock(updated.items);
+    } catch (error) {
+      await Order.updateOne(
+        { _id: updated._id, status: 'cancelled' },
+        {
+          $set: { status: existing.status, stockRestored: false },
+          $pop: { statusHistory: 1 },
+        }
+      );
+      throw error;
+    }
+
+    const populated = await populateOrder(updated._id);
+    res.json({ success: true, data: { order: populated.toObject() } });
   } catch (error) {
     next(error);
   }
+};
+
+export const cancelStalePendingOrders = async (olderThanHours = 24) => {
+  const cutoff = new Date(Date.now() - olderThanHours * 60 * 60 * 1000);
+  const stale = await Order.find({
+    status: 'pending',
+    createdAt: { $lt: cutoff },
+  }).select('_id');
+
+  let cancelled = 0;
+  for (const { _id } of stale) {
+    const order = await Order.findOneAndUpdate(
+      {
+        _id,
+        status: 'pending',
+        createdAt: { $lt: cutoff },
+        stockRestored: { $ne: true },
+      },
+      {
+        $set: { status: 'cancelled', stockRestored: true },
+        $unset: { idempotencyKey: 1 },
+        $push: {
+          statusHistory: {
+            status: 'cancelled',
+            at: new Date(),
+            changedBy: null,
+          },
+        },
+      },
+      { new: true }
+    );
+    if (!order) continue;
+
+    try {
+      await restoreStock(order.items);
+      cancelled += 1;
+    } catch (error) {
+      await Order.updateOne(
+        { _id, status: 'cancelled' },
+        {
+          $set: { status: 'pending', stockRestored: false },
+          $pop: { statusHistory: 1 },
+        }
+      );
+    }
+  }
+  return cancelled;
 };

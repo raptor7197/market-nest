@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { productApi } from "../../api/productApi";
+import { formatINR } from "../../utils/format";
 import { useAuth } from "../../context/AuthContext";
 import Spinner from "../../components/common/Spinner";
 import {
@@ -33,6 +34,7 @@ const Dashboard = () => {
           productApi.getBrandDashboard(),
           productApi.getBrandProducts({
             status: filter === "all" ? undefined : filter,
+            limit: 50,
           }),
         ]);
         setStats(dashboardRes.data.stats);
@@ -52,6 +54,9 @@ const Dashboard = () => {
     try {
       await productApi.deleteProduct(id);
       setProducts(products.filter((p) => p._id !== id));
+      // Archived count changed, so refresh the stat cards too.
+      const dashboardRes = await productApi.getBrandDashboard();
+      setStats(dashboardRes.data.stats);
     } catch (error) {
       alert("Failed to delete product");
     }
@@ -151,7 +156,7 @@ const Dashboard = () => {
             <table className="w-full min-w-[760px]">
               <thead className="bg-gray-50">
                 <tr>
-                  {["Product", "Category", "Price", "Status", "Actions"].map(
+                  {["Product", "Category", "Price", "Stock", "Status", "Actions"].map(
                     (heading) => (
                       <th
                         key={heading}
@@ -169,7 +174,7 @@ const Dashboard = () => {
                 {products.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="5"
+                      colSpan="6"
                       className="px-6 py-12 text-center text-sm font-medium text-gray-500"
                     >
                       No products found
@@ -202,7 +207,20 @@ const Dashboard = () => {
                         {product.category}
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold text-charcoal">
-                        ₹{product.price.toFixed(2)}
+                        {formatINR(product.price)}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${
+                            (product.stock ?? 0) === 0
+                              ? "bg-red-50 text-red-600"
+                              : (product.stock ?? 0) <= 5
+                                ? "bg-burnt-50 text-burnt"
+                                : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {product.stock ?? 0}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <span

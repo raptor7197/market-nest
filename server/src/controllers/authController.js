@@ -5,21 +5,39 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from '../services/tokenService.js';
-import { COOKIE_OPTIONS } from '../utils/constants.js';
+import { COOKIE_OPTIONS, CLEAR_COOKIE_OPTIONS } from '../utils/constants.js';
 import ApiError from '../utils/ApiError.js';
 import { validate } from '../middleware/validate.js';
 import { signupSchema, loginSchema } from '../validators/authValidator.js';
 
+const normalizeEmail = (email = '') => String(email).trim().toLowerCase();
+
+const publicUser = (user) => ({
+  id: user._id,
+  email: user.email,
+  name: user.name,
+  role: user.role,
+});
+
 export const signup = async (req, res, next) => {
   try {
-    const { email, password, name, role } = req.body;
+    const { password, name, role } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       throw ApiError.conflict('Email already registered');
     }
 
-    const user = await User.create({ email, password, name, role });
+    let user;
+    try {
+      user = await User.create({ email, password, name, role });
+    } catch (error) {
+      if (error.code === 11000) {
+        throw ApiError.conflict('Email already registered');
+      }
+      throw error;
+    }
 
     const { token: refreshToken, hashedToken } = await generateRefreshToken(user._id);
     user.refreshToken = hashedToken;
@@ -31,15 +49,7 @@ export const signup = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      data: {
-        user: {
-          id: user._id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-        accessToken,
-      },
+      data: { user: publicUser(user), accessToken },
     });
   } catch (error) {
     next(error);
@@ -48,7 +58,8 @@ export const signup = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = normalizeEmail(req.body.email);
 
     const user = await User.findOne({ email }).select('+password +refreshToken');
     if (!user) {
@@ -70,30 +81,36 @@ export const login = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: {
-        user: {
-          id: user._id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        },
-        accessToken,
-      },
+      data: { user: publicUser(user), accessToken },
     });
   } catch (error) {
     next(error);
   }
 };
 
+// Logout is intentionally not behind `authenticate`: an expired access token
+// must not prevent clearing the refresh cookie / server-side refresh hash.
 export const logout = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
-    if (user) {
-      user.refreshToken = null;
-      await user.save();
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (refreshToken) {
+      try {
+        const decoded = jwt.verify(
+          refreshToken,
+          process.env.JWT_REFRESH_SECRET
+        );
+        const user = await User.findById(decoded.id);
+        if (user) {
+          user.refreshToken = null;
+          await user.save();
+        }
+      } catch {
+        // Token already invalid/expired: still clear the cookie below.
+      }
     }
 
-    res.clearCookie('refreshToken', COOKIE_OPTIONS);
+    res.clearCookie('refreshToken', CLEAR_COOKIE_OPTIONS);
 
     res.json({
       success: true,
@@ -111,9 +128,11 @@ export const refreshAccessToken = async (req, res, next) => {
       throw ApiError.unauthorized('Refresh token not found');
     }
 
-    const decoded = jwt.decode(refreshToken);
-    if (!decoded || !decoded.id) {
-      throw ApiError.unauthorized('Invalid refresh token');
+    let decoded;
+    try {
+      decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    } catch {
+      throw ApiError.unauthorized('Invalid or expired refresh token');
     }
 
     const user = await User.findById(decoded.id).select('+refreshToken');

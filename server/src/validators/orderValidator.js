@@ -43,15 +43,18 @@ export const createOrderSchema = Joi.object({
       })
     )
     .min(1)
+    .max(50)
     .required()
     .messages({
       'array.min': 'Order must contain at least one item',
+      'array.max': 'Order cannot contain more than 50 items',
       'any.required': 'Order items are required',
     }),
   shippingAddress: shippingAddressSchema.required(),
   paymentMethod: Joi.string()
     .valid(...PAYMENT_METHODS)
     .default('cod'),
+  idempotencyKey: Joi.string().trim().max(128).allow('', null),
 });
 
 export const updateOrderStatusSchema = Joi.object({

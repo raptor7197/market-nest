@@ -7,6 +7,7 @@ import Marketplace from "./pages/Marketplace";
 import ProductDetails from "./pages/ProductDetails";
 import Checkout from "./pages/Checkout";
 import Orders from "./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
 import Unauthorized from "./pages/Unauthorized";
 import Dashboard from "./pages/brand/Dashboard";
 import ProductForm from "./pages/brand/ProductForm";
@@ -39,6 +40,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={["customer"]}>
               <Orders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="orders/:id"
+          element={
+            <ProtectedRoute allowedRoles={["customer"]}>
+              <OrderDetails />
             </ProtectedRoute>
           }
         />

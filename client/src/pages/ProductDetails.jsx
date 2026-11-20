@@ -3,37 +3,56 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { productApi } from "../api/productApi";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
+import { formatINR } from "../utils/format";
 import {
   ArrowLeft,
   CheckCircle2,
   RotateCcw,
   ShieldCheck,
   ShoppingBag,
+  Minus,
+  Plus,
   Zap,
 } from "lucide-react";
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addItem, items } = useCart();
   const { user } = useAuth();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [quantity, setQuantity] = useState(1);
   const [addedMessage, setAddedMessage] = useState("");
+  const stock = product?.stock ?? 0;
+  const maxQty = Math.min(stock, 99);
+  const inCart =
+    items.find((item) => item.product === product?._id)?.quantity ?? 0;
 
   useEffect(() => {
+    let active = true;
     const fetchProduct = async () => {
+      setLoading(true);
+      setLoadError(null);
+      setProduct(null);
+      setSelectedImage(0);
+      setQuantity(1);
+      setAddedMessage("");
       try {
         const response = await productApi.getProductById(id);
-        setProduct(response.data.product);
+        if (active) setProduct(response.data.product);
       } catch (error) {
-        console.error("Error fetching product:", error);
+        if (active) setLoadError(error);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
     fetchProduct();
+    return () => {
+      active = false;
+    };
   }, [id]);
 
   if (loading) {
@@ -48,11 +67,17 @@ const ProductDetails = () => {
   }
 
   if (!product) {
+    const isNotFound = loadError?.response?.status === 404;
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-offwhite px-4 text-center">
         <h2 className="text-4xl font-extrabold tracking-tight text-charcoal">
-          Product not found
+          {isNotFound ? "Product not found" : "Could not load product"}
         </h2>
+        {!isNotFound && (
+          <p className="mt-3 text-sm text-gray-500">
+            Please check your connection and try again.
+          </p>
+        )}
         <Link
           to="/products"
           className="mt-6 rounded-full bg-burnt px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(201,79,36,0.24)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600"
@@ -146,11 +171,37 @@ const ProductDetails = () => {
 
               <div className="mt-6 flex items-end gap-2">
                 <span className="text-4xl font-extrabold tracking-tight text-charcoal">
-                  ₹{product.price.toFixed(2)}
+                  {formatINR(product.price)}
                 </span>
                 <span className="pb-1 text-sm font-medium text-gray-500">
                   ₹ INR
                 </span>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2 text-sm font-semibold">
+                {stock > 0 ? (
+                  <>
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        stock <= 5 ? "bg-burnt" : "bg-[#16807a]"
+                      }`}
+                    />
+                    <span
+                      className={
+                        stock <= 5 ? "text-burnt" : "text-[#16807a]"
+                      }
+                    >
+                      {stock <= 5
+                        ? `Only ${stock} left in stock`
+                        : `In stock (${stock} available)`}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                    <span className="text-red-600">Out of stock</span>
+                  </>
+                )}
               </div>
 
               <div className="mt-8">
@@ -194,27 +245,72 @@ const ProductDetails = () => {
                         {addedMessage}
                       </p>
                     )}
+                    <div className="mb-4 flex items-center gap-4">
+                      <span className="text-sm font-semibold text-charcoal">
+                        Quantity
+                      </span>
+                      <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-1">
+                        <button
+                          type="button"
+                          onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                          disabled={quantity <= 1 || maxQty <= 0}
+                          className="rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-40"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <span className="w-8 text-center text-sm font-semibold text-charcoal">
+                          {Math.min(quantity, Math.max(maxQty, 1))}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setQuantity((q) => Math.min(maxQty, q + 1))
+                          }
+                          disabled={quantity >= maxQty || maxQty <= 0}
+                          className="rounded-full p-1.5 text-gray-600 transition-colors hover:bg-gray-100 disabled:opacity-40"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                      </div>
+                      {inCart > 0 && (
+                        <span className="text-xs font-medium text-gray-500">
+                          {inCart} already in cart
+                        </span>
+                      )}
+                    </div>
+
                     <div className="flex flex-col gap-3 sm:flex-row">
                       <button
                         onClick={() => {
-                          addItem(product, 1);
-                          setAddedMessage("Added to cart!");
+                          const requested = Math.min(quantity, maxQty);
+                          if (inCart >= maxQty || requested < 1) {
+                            setAddedMessage("Stock limit reached for this item.");
+                          } else {
+                            addItem(product, requested);
+                            setAddedMessage("Added to cart!");
+                          }
                           setTimeout(() => setAddedMessage(""), 2500);
                         }}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-charcoal shadow-sm transition-all hover:-translate-y-0.5 hover:border-burnt/30"
+                        disabled={maxQty <= 0 || inCart >= maxQty}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-charcoal shadow-sm transition-all hover:-translate-y-0.5 hover:border-burnt/30 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                       >
                         <ShoppingBag className="h-5 w-5" />
-                        Add to cart
+                        {inCart >= maxQty && maxQty > 0
+                          ? "Max in cart"
+                          : "Add to cart"}
                       </button>
                       <button
                         onClick={() => {
-                          addItem(product, 1);
+                          addItem(product, Math.min(quantity, maxQty));
                           navigate("/checkout");
                         }}
-                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-burnt px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(201,79,36,0.25)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600"
+                        disabled={maxQty <= 0}
+                        className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-burnt px-6 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(201,79,36,0.25)] transition-all hover:-translate-y-0.5 hover:bg-burnt-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                       >
                         <Zap className="h-5 w-5" />
-                        Buy now
+                        {maxQty > 0 ? "Buy now" : "Out of stock"}
                       </button>
                     </div>
                   </>

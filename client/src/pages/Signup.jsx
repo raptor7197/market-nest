@@ -15,7 +15,10 @@ const Signup = () => {
   const { signup } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const redirectTo = location.state?.from?.pathname || "/products";
+  const from = location.state?.from;
+  const redirectTo = from
+    ? `${from.pathname || "/products"}${from.search || ""}${from.hash || ""}`
+    : "/products";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -33,7 +36,7 @@ const Signup = () => {
         formData.name,
         formData.role,
       );
-      navigate(redirectTo);
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(
         err.response?.data?.message || "Registration failed. Please try again.",
@@ -174,6 +177,7 @@ const Signup = () => {
                 Already have an account?{" "}
                 <Link
                   to="/login"
+                  state={location.state}
                   className="font-semibold text-burnt hover:text-burnt-600"
                 >
                   Login

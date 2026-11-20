@@ -17,6 +17,8 @@ const Marketplace = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState(null);
+  const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "");
@@ -25,6 +27,7 @@ const Marketplace = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+      setError("");
       try {
         const params = { page, limit: 12 };
         if (search) params.search = search;
@@ -33,8 +36,13 @@ const Marketplace = () => {
         const response = await productApi.getProducts(params);
         setProducts(response.data.products);
         setPagination(response.data.pagination);
-      } catch (error) {
-        console.error("Error fetching products:", error);
+      } catch (err) {
+        setProducts([]);
+        setPagination(null);
+        setError(
+          err.response?.data?.message ||
+            "Failed to load products. Please try again."
+        );
       } finally {
         setLoading(false);
       }
@@ -42,15 +50,27 @@ const Marketplace = () => {
 
     const debounce = setTimeout(fetchProducts, 300);
     return () => clearTimeout(debounce);
-  }, [page, search, category]);
+  }, [page, search, category, refreshKey]);
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (category) params.set("category", category);
     if (page > 1) params.set("page", page.toString());
-    setSearchParams(params);
+    setSearchParams(params, { replace: true });
   }, [search, category, page, setSearchParams]);
+
+  // Keep local state in sync with browser back/forward or manual URL edits.
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    const urlCategory = searchParams.get("category") || "";
+    const urlPage = parseInt(searchParams.get("page"), 10) || 1;
+    setSearch((current) => (current === urlSearch ? current : urlSearch));
+    setCategory((current) =>
+      current === urlCategory ? current : urlCategory
+    );
+    setPage((current) => (current === urlPage ? current : urlPage));
+  }, [searchParams]);
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
@@ -119,6 +139,18 @@ const Marketplace = () => {
           </div>
         </div>
 
+        {error && !loading && (
+          <div className="mb-6 flex flex-col items-center gap-3 rounded-[2rem] border border-red-200 bg-red-50 p-8 text-center">
+            <p className="text-sm font-semibold text-red-600">{error}</p>
+            <button
+              onClick={() => setRefreshKey((k) => k + 1)}
+              className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-red-600 shadow-sm"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex flex-col items-center justify-center py-28">
             <div className="spinner h-12 w-12" />
@@ -126,7 +158,7 @@ const Marketplace = () => {
               Loading products
             </p>
           </div>
-        ) : products.length === 0 ? (
+        ) : products.length === 0 && !error ? (
           <div className="rounded-[2rem] border border-dashed border-gray-300 bg-white p-12 text-center shadow-sm">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-500">
               <PackageOpen className="h-7 w-7" />

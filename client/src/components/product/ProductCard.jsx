@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
+import { formatINR } from "../../utils/format";
 
 const ProductCard = ({ product }) => {
   return (
@@ -28,6 +29,11 @@ const ProductCard = ({ product }) => {
         <div className="absolute bottom-3 right-3 rounded-full bg-charcoal/90 px-3 py-1 text-xs font-semibold capitalize text-white backdrop-blur">
           {product.category}
         </div>
+        {typeof product.stock === "number" && product.stock <= 0 && (
+          <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 rounded-full bg-charcoal/85 px-4 py-2 text-center text-xs font-bold uppercase tracking-wide text-white backdrop-blur">
+            Out of stock
+          </div>
+        )}
       </div>
 
       <div className="p-4">
@@ -44,10 +50,16 @@ const ProductCard = ({ product }) => {
           <div>
             <p className="text-xs font-medium text-gray-500">Starting at</p>
             <p className="text-xl font-extrabold tracking-tight text-charcoal">
-              ₹{product.price.toFixed(2)}
+              {formatINR(product.price)}
             </p>
           </div>
-          <span className="h-2 w-2 rounded-full bg-[#16807a]" />
+          <span
+            className={`h-2 w-2 rounded-full ${
+              typeof product.stock === "number" && product.stock <= 0
+                ? "bg-red-500"
+                : "bg-[#16807a]"
+            }`}
+          />
         </div>
       </div>
     </Link>

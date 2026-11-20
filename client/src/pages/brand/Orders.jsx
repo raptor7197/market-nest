@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { orderApi } from "../../api/orderApi";
+import { formatINR } from "../../utils/format";
 import Spinner from "../../components/common/Spinner";
 import {
   CheckCircle2,
@@ -40,40 +41,39 @@ const BrandOrders = () => {
   const [updating, setUpdating] = useState(null);
   const [error, setError] = useState("");
 
+  const loadOrders = async (statusFilter = filter) => {
+    setError("");
+    setLoading(true);
+    try {
+      const [ordersRes, statsRes] = await Promise.all([
+        orderApi.getBrandOrders({
+          limit: 50,
+          status: statusFilter === "all" ? undefined : statusFilter,
+        }),
+        orderApi.getBrandOrderStats(),
+      ]);
+      setOrders(ordersRes.data.orders);
+      setStats(statsRes.data);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load orders");
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const [ordersRes, statsRes] = await Promise.all([
-          orderApi.getBrandOrders({
-            limit: 50,
-            status: filter === "all" ? undefined : filter,
-          }),
-          orderApi.getBrandOrderStats(),
-        ]);
-        setOrders(ordersRes.data.orders);
-        setStats(statsRes.data);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load orders");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
+    loadOrders(filter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
   const handleStatusUpdate = async (orderId, status) => {
     setUpdating(orderId);
     try {
-      const response = await orderApi.updateOrderStatus(orderId, status);
-      setOrders((current) =>
-        current.map((order) =>
-          order._id === orderId
-            ? { ...order, status: response.data.order.status }
-            : order
-        )
-      );
-      const statsRes = await orderApi.getBrandOrderStats();
-      setStats(statsRes.data);
+      // Refetch instead of patching locally so filtered views and stats stay
+      // consistent after the transition.
+      await orderApi.updateOrderStatus(orderId, status);
+      await loadOrders();
     } catch (err) {
       alert(err.response?.data?.message || "Could not update order");
     } finally {
@@ -93,7 +93,7 @@ const BrandOrders = () => {
     ["Total orders", stats?.totalOrders || 0, ShoppingBag, "bg-gray-100 text-charcoal"],
     [
       "Revenue",
-      `₹${(stats?.revenue || 0).toFixed(2)}`,
+      formatINR(stats?.revenue || 0),
       IndianRupee,
       "bg-[#e7f5f2] text-[#16807a]",
     ],
@@ -217,7 +217,7 @@ const BrandOrders = () => {
                         {order.status}
                       </span>
                       <span className="text-lg font-extrabold tracking-tight text-charcoal">
-                        ₹{order.brandTotal.toFixed(2)}
+                        {formatINR(order.brandTotal)}
                       </span>
                     </div>
                   </div>
@@ -245,7 +245,7 @@ const BrandOrders = () => {
                           {item.name}
                         </p>
                         <p className="text-sm font-medium text-gray-500">
-                          Qty {item.quantity} × ₹{item.price.toFixed(2)}
+                          Qty {item.quantity} × {formatINR(item.price)}
                         </p>
                       </div>
                     ))}

@@ -10,6 +10,7 @@ const placeholderProducts = [
     name: 'Utility Overshirt',
     description: 'Structured cotton overshirt with matte hardware and a relaxed fit for everyday layering.',
     price: 79,
+    stock: 32,
     category: 'clothing',
     status: 'published',
     images: [
@@ -21,6 +22,7 @@ const placeholderProducts = [
     name: 'Metro Runner',
     description: 'Lightweight sneakers with contrast paneling and a cushioned sole for all-day wear.',
     price: 109,
+    stock: 24,
     category: 'shoes',
     status: 'published',
     images: [
@@ -32,6 +34,7 @@ const placeholderProducts = [
     name: 'Canvas Weekender',
     description: 'Large carryall with reinforced handles, zip closure, and enough room for a short trip.',
     price: 95,
+    stock: 18,
     category: 'bags',
     status: 'published',
     images: [
@@ -42,6 +45,7 @@ const placeholderProducts = [
     name: 'Orbit Chain',
     description: 'Minimal polished chain designed to stack easily with other everyday accessories.',
     price: 42,
+    stock: 40,
     category: 'jewelry',
     status: 'published',
     images: [
@@ -52,6 +56,7 @@ const placeholderProducts = [
     name: 'Signal Cap',
     description: 'Low-profile cap with embroidered front mark and adjustable back strap.',
     price: 28,
+    stock: 55,
     category: 'accessories',
     status: 'published',
     images: [
@@ -62,6 +67,7 @@ const placeholderProducts = [
     name: 'Studio Tote',
     description: 'Clean-lined daily tote with interior organization and a durable textured finish.',
     price: 68,
+    stock: 21,
     category: 'bags',
     status: 'published',
     images: [
@@ -72,6 +78,7 @@ const placeholderProducts = [
     name: 'Drift Hoodie',
     description: 'Midweight hoodie with dropped shoulders, soft brushed interior, and subtle seam detailing.',
     price: 64,
+    stock: 27,
     category: 'clothing',
     status: 'published',
     images: [
@@ -82,6 +89,7 @@ const placeholderProducts = [
     name: 'Contour Loafer',
     description: 'Modern slip-on loafer with squared toe profile and smooth leather upper.',
     price: 122,
+    stock: 14,
     category: 'shoes',
     status: 'published',
     images: [

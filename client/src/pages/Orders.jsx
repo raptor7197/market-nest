@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { orderApi } from "../api/orderApi";
+import { formatINR } from "../utils/format";
 import Spinner from "../components/common/Spinner";
 import {
   CheckCircle2,
@@ -30,24 +31,41 @@ export const orderStatusIcons = {
 const Orders = () => {
   const location = useLocation();
   const [orders, setOrders] = useState([]);
+  const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
   const [cancelling, setCancelling] = useState(null);
   const [showBanner, setShowBanner] = useState(Boolean(location.state?.placed));
 
+  const fetchOrders = async (page = 1, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
+    setError("");
+    try {
+      const response = await orderApi.getMyOrders({ page, limit: 10 });
+      const nextOrders = response.data.orders;
+      setOrders((current) =>
+        append ? [...current, ...nextOrders] : nextOrders
+      );
+      setPagination(response.data.pagination);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to load orders");
+      if (!append) setOrders([]);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await orderApi.getMyOrders({ limit: 50 });
-        setOrders(response.data.orders);
-      } catch (err) {
-        setError(err.response?.data?.message || "Failed to load orders");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchOrders();
+    fetchOrders(1);
   }, []);
+
+  const handleLoadMore = () => {
+    if (!pagination?.hasNextPage || loadingMore) return;
+    fetchOrders(pagination.currentPage + 1, true);
+  };
 
   const handleCancel = async (id) => {
     if (!window.confirm("Cancel this order?")) return;
@@ -186,11 +204,11 @@ const Orders = () => {
                           </p>
                           <p className="text-xs font-medium text-gray-500">
                             {item.brand?.name ? `${item.brand.name} · ` : ""}
-                            Qty {item.quantity} × ₹{item.price.toFixed(2)}
+                            Qty {item.quantity} × {formatINR(item.price)}
                           </p>
                         </div>
                         <span className="font-bold text-charcoal">
-                          ₹{(item.price * item.quantity).toFixed(2)}
+                          {formatINR(item.price * item.quantity)}
                         </span>
                       </li>
                     ))}
@@ -205,8 +223,14 @@ const Orders = () => {
                       item(s) · Cash on delivery
                     </p>
                     <div className="flex items-center gap-4">
+                      <Link
+                        to={`/orders/${order._id}`}
+                        className="text-sm font-semibold text-burnt hover:text-burnt-600"
+                      >
+                        View details
+                      </Link>
                       <span className="text-lg font-extrabold tracking-tight text-charcoal">
-                        ₹{order.totalAmount.toFixed(2)}
+                        {formatINR(order.totalAmount)}
                       </span>
                       {canCancel && (
                         <button
@@ -222,6 +246,18 @@ const Orders = () => {
                 </article>
               );
             })}
+          </div>
+        )}
+
+        {pagination?.hasNextPage && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="rounded-full border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-charcoal shadow-sm transition-all hover:-translate-y-0.5 hover:border-burnt/30 disabled:opacity-60"
+            >
+              {loadingMore ? "Loading..." : "Load more orders"}
+            </button>
           </div>
         )}
       </div>

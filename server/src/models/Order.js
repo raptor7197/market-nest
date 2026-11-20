@@ -44,12 +44,28 @@ const shippingAddressSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const statusHistorySchema = new mongoose.Schema(
+  {
+    status: { type: String, enum: ORDER_STATUS, required: true },
+    at: { type: Date, default: Date.now },
+    changedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  },
+  { _id: false }
+);
+
 const orderSchema = new mongoose.Schema(
   {
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'Customer is required'],
+      index: true,
+    },
+    // Orders are single-brand now that multi-brand carts are split.
+    brand: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: [true, 'Brand is required'],
       index: true,
     },
     items: {
@@ -70,6 +86,7 @@ const orderSchema = new mongoose.Schema(
       default: 'pending',
       index: true,
     },
+    statusHistory: { type: [statusHistorySchema], default: [] },
     shippingAddress: {
       type: shippingAddressSchema,
       required: [true, 'Shipping address is required'],
@@ -79,12 +96,33 @@ const orderSchema = new mongoose.Schema(
       enum: PAYMENT_METHODS,
       default: 'cod',
     },
+    // Client-supplied key used to make retries idempotent.
+    idempotencyKey: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    // Guards restock so retries cannot increment inventory twice.
+    stockRestored: {
+      type: Boolean,
+      default: false,
+      select: false,
+    },
   },
   { timestamps: true }
 );
 
 orderSchema.index({ 'items.brand': 1, createdAt: -1 });
 orderSchema.index({ customer: 1, createdAt: -1 });
+orderSchema.index({ brand: 1, status: 1, createdAt: -1 });
+// Concurrent retries with the same key can only create one order per brand.
+orderSchema.index(
+  { customer: 1, idempotencyKey: 1, brand: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { idempotencyKey: { $type: 'string' } },
+  }
+);
 
 const Order = mongoose.model('Order', orderSchema);
 export default Order;

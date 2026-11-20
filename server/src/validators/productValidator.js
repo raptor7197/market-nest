@@ -23,6 +23,11 @@ export const createProductSchema = Joi.object({
   status: Joi.string()
     .valid(...PRODUCT_STATUS)
     .default('draft'),
+  stock: Joi.number().integer().min(0).max(100000).default(0).messages({
+    'number.min': 'Stock cannot be negative',
+    'number.max': 'Stock cannot exceed 100000',
+    'number.integer': 'Stock must be a whole number',
+  }),
 });
 
 export const updateProductSchema = Joi.object({
@@ -32,12 +37,23 @@ export const updateProductSchema = Joi.object({
   category: Joi.string().valid(...CATEGORIES),
   images: Joi.array().items(Joi.string()).max(5),
   status: Joi.string().valid(...PRODUCT_STATUS),
+  stock: Joi.number().integer().min(0).max(100000).messages({
+    'number.min': 'Stock cannot be negative',
+    'number.max': 'Stock cannot exceed 100000',
+    'number.integer': 'Stock must be a whole number',
+  }),
 });
 
 export const productQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
+  page: Joi.number().integer().min(1).max(10000).default(1),
   limit: Joi.number().integer().min(1).max(50).default(12),
   category: Joi.string().valid(...CATEGORIES),
-  search: Joi.string().allow(''),
+  search: Joi.string().max(100).allow(''),
   status: Joi.string().valid('published'),
+});
+
+export const brandProductQuerySchema = Joi.object({
+  page: Joi.number().integer().min(1).max(10000).default(1),
+  limit: Joi.number().integer().min(1).max(50).default(12),
+  status: Joi.string().valid(...PRODUCT_STATUS),
 });

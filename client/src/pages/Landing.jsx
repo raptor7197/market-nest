@@ -126,10 +126,10 @@ const Landing = () => {
                     </div>
                     <div className="mt-4 grid grid-cols-2 gap-3">
                       {[
-                        ["Studio Jacket", "$88.00"],
-                        ["Daily Tote", "$42.00"],
-                        ["Runner Low", "$120.00"],
-                        ["Pearl Hoops", "$35.00"],
+                        ["Studio Jacket", "₹88.00"],
+                        ["Daily Tote", "₹42.00"],
+                        ["Runner Low", "₹120.00"],
+                        ["Pearl Hoops", "₹35.00"],
                       ].map(([name, price], index) => (
                         <div
                           key={name}
